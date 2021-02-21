@@ -1,4 +1,5 @@
 import requests
+import os
 
 S = requests.Session()
 URL = "https://test.wikipedia.org/w/api.php"

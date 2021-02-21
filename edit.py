@@ -1,6 +1,6 @@
 import requests
 import os
-
+print("Logging in as"+str(os.environ.get('USERNAME')))
 S = requests.Session()
 URL = "https://test.wikipedia.org/w/api.php"
 

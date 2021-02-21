@@ -1,5 +1,7 @@
 import requests
-input("Password: ", PASSWORD)
+print("Password: ")
+PASSWORD=input()
+
 S = requests.Session()
 URL = "https://test.wikipedia.org/w/api.php"
 

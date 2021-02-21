@@ -23,7 +23,7 @@ print(LOGIN_TOKEN)
 PARAMS1 = {
     'action':"login",
     'lgname':"BOTutor",
-    'lgpassword':PASSWORD,
+    'lgpassword':os.environ.get('PASSWORD'),
     'lgtoken':LOGIN_TOKEN,
     'format':"json"
 }

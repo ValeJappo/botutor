@@ -1,7 +1,16 @@
 import requests
 import os
+import difflib
 from configparser import ConfigParser
 
+def getchanges(id):
+	params={
+		#...
+	}
+	diff=difflib.ndiff(c1, c2)
+	add=l for l in diff if l.startswith('+ ')
+	for a in add:
+		print(a)
 def placeholder(ns):
 	print("Namespace "+str(ns))
 
@@ -102,9 +111,8 @@ for us in USERS:
 		edcount=us['editcount']
 	except KeyError: #Anonym users
 		edcount=0
+	getchanges(us['revid'])
 	if edcount < 100 and rc['timestamp']!=lasttimestamp: #todo: verifica che non sia verificato rc["patrolled"]=="" / "unpatrolled (serve patrol/patrolmark); #filtra namespace da ids
-		print(rc['timestamp'])
-		print(lasttimestamp)
 		print(str(us['name'])) 
 		if rc["ns"] == 0:
 			placeholder(0)

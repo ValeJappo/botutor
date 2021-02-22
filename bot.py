@@ -23,9 +23,8 @@ def getchanges(idn, ido):
 		"rvslots": "*"
 	}
 	R = S.get(url=URL, params=PARAMS)
-	DATA = R.json()
 	c1=DATA['query']['pages'][0]['revisions'][0]['slots']['main']['content']
-	c2=DATA['query']['pages'][1]['revisions'][0]['slots']['main']['content']
+	c2=DATA['query']['pages'][0]['revisions'][1]['slots']['main']['content']
 	diff=difflib.ndiff(c1, c2)
 	for l in diff:
 		if l.startswith('+ '):
@@ -121,7 +120,6 @@ for rc in RECENTCHANGES:
 	R = S.get(url=URL, params=PARAMS4)
 	DATA4 = R.json()
 	USERS=DATA4['query']['users']
-	print(rc)
 
 	for us in USERS:
 		try:

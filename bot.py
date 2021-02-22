@@ -14,6 +14,7 @@ password=str(userinfo["password"])
 	
 def control(add, rem, sadd, srem, funct):
 	if add.find(sadd) >= 0 or sadd=='':
+		print(add.find(sadd))
 		if rem.find(srem) >=0 or srem=='':
 			funct()
 	

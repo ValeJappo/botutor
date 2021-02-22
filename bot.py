@@ -128,7 +128,7 @@ for us in USERS:
 		edcount=us['editcount']
 	except KeyError: #Anonym users
 		edcount=0
-	getchanges(us['revid'], (us['old_revid'])
+	getchanges(us['revid'], (us['old_revid']))
 	if edcount < 100 and rc['timestamp']!=lasttimestamp: #todo: verifica che non sia verificato rc["patrolled"]=="" / "unpatrolled (serve patrol/patrolmark); #filtra namespace da ids
 		print(str(us['name'])) 
 		if rc["ns"] == 0:

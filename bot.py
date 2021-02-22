@@ -25,8 +25,8 @@ def getchanges(idn, ido):
 	R = S.get(url=URL, params=PARAMS)
 	DATA = R.json()
 	print(DATA)
-	c1=DATA['query']['pages'][0]['revisions'][0]['content']['slots']['main']['content']
-	c2=DATA['query']['pages'][1]['revisions'][0]['content']['slots']['main']['content']
+	c1=DATA['query']['pages'][0]['revisions'][0]['slots']['main']['content']
+	c2=DATA['query']['pages'][1]['revisions'][0]['slots']['main']['content']
 	diff=difflib.ndiff(c1, c2)
 	for l in diff:
 		if l.startswith('+ '):

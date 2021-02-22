@@ -27,9 +27,9 @@ def getchanges(idn, ido):
 	c1=DATA['quey']['pages'][0]['revisions'][0]['content']
 	c2=DATA['quey']['pages'][1]['revisions'][0]['content']
 	diff=difflib.ndiff(c1, c2)
-	add=l for l in diff if l.startswith('+ ')
-	for a in add:
-		print(a)
+	for l in diff:
+		if l.startswith('+ '):
+			print(l)
 		
 def messaggio(utente, testo):
 	#controllare benvenuto

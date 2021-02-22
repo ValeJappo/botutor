@@ -7,7 +7,7 @@ config_object.read("config.conf")
 userinfo = config_object["INFO"]
 username=str(userinfo["username"])
 password=str(userinfo["password"])
-print("Logging in as "+username+" with password "+password)
+
 S = requests.Session()
 URL = "https://test.wikipedia.org/w/api.php"
 
@@ -39,7 +39,12 @@ PARAMS1 = {
 
 R = S.post(URL, data=PARAMS1)
 DATA1 = R.json()
-print(DATA1)
+if DATA1["clientlogin"][0]["status"]=="PASS":
+	print("Logged in as "+username);
+else
+	print("Login error."+DATA1)
+	return 0
+
 #Token CSRF
 PARAMS2 = {
     "action": "query",

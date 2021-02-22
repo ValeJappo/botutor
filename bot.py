@@ -118,7 +118,7 @@ for rc in RECENTCHANGES:
 				"rvprop": "content|oresscores|sha1",
 				"rvslots": "*"
 			}
-			R = S.get(url=URL, params=PARAMS)
+			R = S.get(url=URL, params=PARAMS5)
 			DAT5A = R.json()
 			if DATA5['query']['pages'][0]['revisions'][1]['oresscores']['goodfaith']['true'] > DATA5['query']['pages'][0]['revisions'][1]['oresscores']['goodfaith']['false']:
 				c1=DATA5['query']['pages'][0]['revisions'][0]['slots']['main']['content']

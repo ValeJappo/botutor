@@ -77,9 +77,8 @@ try:
 	PARAMS3["rclimit"]="max"
 	PARAMS3["rcdir"]="newer"
 except (KeyError, NameError) as error:
-	lasttimestamp=0
-	PARAMS3["rclimit"]=1
-	PARAMS3["rcdir"]="older"
+	os.startfile("update_timestamp.py")
+	raise SystemExit
 
 R = S.get(url=URL, params=PARAMS3)
 DATA3 = R.json()

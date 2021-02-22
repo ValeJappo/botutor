@@ -1,10 +1,5 @@
 import requests
 import os
-
-if str(os.environ.get('BOTUSERNAME')) == 'None':
-    os.environ['BOTUSERNAME'] = str(raw_input("Username: "))
-if str(os.environ.get('BOTPASSWORD')) == 'None':
-    os.environ['BOTPASSWORD'] = str(raw_input("Password: "))
     
 print("Logging in as "+str(os.environ.get('BOTUSERNAME'))+" with password "+str(os.environ.get('BOTPASSWORD')))
 S = requests.Session()

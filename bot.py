@@ -34,6 +34,7 @@ def getchanges(idn, ido):
 def messaggio(utente, testo):
 	#controllare benvenuto
 	#api edit
+	print('msg')
 		
 def placeholder(ns):
 	print("Namespace "+str(ns))

@@ -69,6 +69,8 @@ PARAMS3 ={
 	"rcnamespace": "0|2",
 	"rcprop": "title|user|userid|timestamp|flags|ids", #patrolled <- serve patrol/patrolmarks
 	"rctype": "edit|new",
+	"rclimit": "max",
+	"rcdir" : "newer",
 	"rcnamespace": 0|1|2|3|6|14, #todo: +6, 14 (file, cat) per verifiche.
 	"rctoponly": 1	
 }
@@ -76,8 +78,6 @@ PARAMS3 ={
 try:
 	PARAMS3["rcstart"]=str(config_object["DATA"]["timestamp"])
 	lasttimestamp=str(config_object["DATA"]["timestamp"])
-	PARAMS3["rclimit"]="max"
-	PARAMS3["rcdir"]="newer"
 except (KeyError, NameError) as error:
 	os.startfile("update_timestamp.py")
 	raise SystemExit

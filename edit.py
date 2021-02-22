@@ -66,6 +66,6 @@ PARAMS3 = {
 R = S.post(URL, data=PARAMS3)
 DATA3 = R.json()
 
-os.environ['BOTUSERNAME']
+os.environ['ITERATIONS']=+1
 
 print(DATA3)

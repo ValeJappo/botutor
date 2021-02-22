@@ -21,7 +21,7 @@ PARAMS0 = {
 R = S.get(url=URL, params=PARAMS0)
 DATA0 = R.json()
 
-LOGIN_TOKEN = DATA['query']['tokens']['logintoken']
+LOGIN_TOKEN = DATA0['query']['tokens']['logintoken']
 
 print(LOGIN_TOKEN)
 

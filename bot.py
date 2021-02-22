@@ -24,8 +24,6 @@ DATA0 = R.json()
 
 LOGIN_TOKEN = DATA0['query']['tokens']['logintoken']
 
-print(LOGIN_TOKEN)
-
 # Login
 
 PARAMS1 = {
@@ -66,8 +64,9 @@ PARAMS3 ={
 	"list": "recentchanges",
 	"continue": "-||",
 	"rcnamespace": "0|2",
-	"rcprop": "title|user|userid|timestamp",
+	"rcprop": "title|user|userid|timestamp|flags|rctype|ids", #patrolled <- serve patrol/patrolmarks
 	"rctype": "edit|new",
+	"rcnamespace": 0|1|2|3|6|14, #todo: +6, 14 (file, cat) per verifiche.
 	"rctoponly": 1	
 }
 
@@ -94,16 +93,21 @@ for rc in RECENTCHANGES:
 	}
 	R = S.get(url=URL, params=PARAMS4)
 	DATA4 = R.json()
-	print(DATA4)
 	USERS=DATA4['query']['users']
 for us in USERS:
-	print(us)
 	try:
 		edcount=us['editcount']
 	except KeyError: #Anonym users
 		edcount=0
-	if edcount < 100 and rc['timestamp']!=lasttimestamp:
+	if edcount < 100 and rc['timestamp']!=lasttimestamp: #todo: verifica che non sia verificato rc["patrolled"]=="" / "unpatrolled (serve patrol/patrolmark); #filtra namespace da ids
 		print(str(us['name'])) 
+		switch (rc["ns"]):
+			case 0: break;
+			case 1: break;
+			case 2: break;
+			case 3: break;
+			case 6: break;
+			case 14: break;
 		lasttimestamp=rc['timestamp']
 		config_object["DATA"]={
 			"timestamp": lasttimestamp

@@ -100,7 +100,9 @@ for rc in RECENTCHANGES:
         if us['editcount'] < 100 and rc['timestamp']!=lasttimestamp:
             print(str(us['name'])) 
             lasttimestamp=rc['timestamp']
-            config_object["DATA"]["timestamp"]=lasttimestamp
+            config_object["DATA"]={
+		    "timestamp": lasttimestamp
+	    }
             with open('config.conf', 'w') as conf:
               config_object.write(conf)
         else:

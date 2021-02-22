@@ -137,7 +137,7 @@ for rc in RECENTCHANGES:
 				links=[]
 				il=0;
 				b=0
-				brackets=True
+				brackets=False
 				for l in diff:
 					if brackets and l.replace('+ ', '') != "]" and not l.startswith('- '):
 						try:
@@ -145,6 +145,14 @@ for rc in RECENTCHANGES:
 						except IndexError:
 							links.append(l.replace('+ ', '').replace(' ', '').replace('[', ''))
 					
+					if l.replace('+ ', '') == "]" and b==0 and brackets:
+							b=-1
+						
+					if l.replace('+ ', '') == "]" and b==-1 and brackets:
+						b=0
+						il=+1;
+						brackets=False
+							
 					if l.startswith('+ '):
 						add=add+l.replace('+ ', '')
 						if l.replace('+ ', '') == "[" and b==0:
@@ -152,13 +160,6 @@ for rc in RECENTCHANGES:
 						if l.replace('+ ', '') == "[" and b==1:
 							b=0
 							brackets=True	
-						if l.replace('+ ', '') == "]" and b==0 and brackets:
-							b=-1
-						
-						if l.replace('+ ', '') == "]" and b==-1 and brackets:
-							b=0
-							il=+1;
-							brackets=False
 					
 					if l.startswith('- '):
 						rem=rem+l.replace('- ', '')

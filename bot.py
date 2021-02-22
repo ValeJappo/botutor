@@ -84,7 +84,7 @@ except (KeyError, NameError) as error:
 
 R = S.get(url=URL, params=PARAMS3)
 DATA3 = R.json()
-
+print(DATA3)
 RECENTCHANGES = DATA3['query']['recentchanges']
 for rc in RECENTCHANGES:
 	PARAMS4={
@@ -97,6 +97,7 @@ for rc in RECENTCHANGES:
 	R = S.get(url=URL, params=PARAMS4)
 	DATA4 = R.json()
 	USERS=DATA4['query']['users']
+	print(DATA4)
 for us in USERS:
 	try:
 		edcount=us['editcount']

@@ -2,6 +2,9 @@ import requests
 import os
 from configparser import ConfigParser
 
+def placeholder(ns):
+	print("Namespace "+ns)
+
 config_object = ConfigParser()
 config_object.read("config.conf")
 userinfo = config_object["INFO"]
@@ -101,13 +104,18 @@ for us in USERS:
 		edcount=0
 	if edcount < 100 and rc['timestamp']!=lasttimestamp: #todo: verifica che non sia verificato rc["patrolled"]=="" / "unpatrolled (serve patrol/patrolmark); #filtra namespace da ids
 		print(str(us['name'])) 
-		switch (rc["ns"]):
-			case 0: break;
-			case 1: break;
-			case 2: break;
-			case 3: break;
-			case 6: break;
-			case 14: break;
+		if rc["ns"] == 0:
+			placeholder(0)
+		if rc["ns"] == 1:
+			placeholder(1)
+		if rc["ns"] == 2:
+			placeholder(2)
+		if rc["ns"] == 3:
+			placeholder(3)
+		if rc["ns"] == 6:
+			placeholder(6)
+		if rc["ns"] == 14:
+			placeholder(14)
 		lasttimestamp=rc['timestamp']
 		config_object["DATA"]={
 			"timestamp": lasttimestamp

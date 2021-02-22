@@ -38,7 +38,7 @@ PARAMS1 = {
 
 R = S.post(URL, data=PARAMS1)
 DATA1 = R.json()
-
+print(DATA1)
 #Token CSRF
 PARAMS2 = {
     "action": "query",

@@ -59,14 +59,6 @@ CSRF_TOKEN = DATA2['query']['tokens']['csrftoken']
 
 
 #Analyze recent changes
-try:
-	PARAMS3["rcstart"]=str(config_object["DATA"]["timestamp"])
-	PARAMS3["rclimit"]="max"
-	PARAMS3["rcdir"]="newer"
-except KeyError:
-	lasttimestamp=0
-	PARAMS3["rclimit"]=1
-	PARAMS3["rcdir"]="older"
 
 PARAMS3 ={
 	"action": "query",
@@ -76,10 +68,18 @@ PARAMS3 ={
 	"rcnamespace": "0|2",
 	"rcprop": "title|user|userid|timestamp",
 	"rctype": "edit|new",
-	"rctoponly": 1
+	"rctoponly": 1	
 }
 
-
+try:
+	PARAMS3["rcstart"]=str(config_object["DATA"]["timestamp"])
+	PARAMS3["rclimit"]="max"
+	PARAMS3["rcdir"]="newer"
+except KeyError:
+	lasttimestamp=0
+	PARAMS3["rclimit"]=1
+	PARAMS3["rcdir"]="older"
+	
 R = S.get(url=URL, params=PARAMS3)
 DATA3 = R.json()
 

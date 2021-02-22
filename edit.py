@@ -1,7 +1,13 @@
 import requests
 import os
-    
-print("Logging in as "+str(os.environ.get('BOTUSERNAME'))+" with password "+str(os.environ.get('BOTPASSWORD')))
+from configparser import ConfigParser
+
+config_object = ConfigParser()
+config_object.read("config.conf")
+userinfo = config_object["INFO"]
+username=str(userinfo["username"]))
+username=str(userinfo["password"]))
+print("Logging in as "+username+" with password "+password)
 S = requests.Session()
 URL = "https://test.wikipedia.org/w/api.php"
 
@@ -24,8 +30,8 @@ print(LOGIN_TOKEN)
 
 PARAMS1 = {
     'action': "clientlogin",
-    'username': os.environ['BOTUSERNAME'],
-    'password': os.environ['BOTPASSWORD'],
+    'username': username,
+    'password': password,
     'loginreturnurl': 'http://127.0.0.1:5000/',
     'logintoken': LOGIN_TOKEN,
     'format': "json"

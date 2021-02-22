@@ -97,6 +97,7 @@ for rc in RECENTCHANGES:
     print(DATA4)
     USERS=DATA4['query']['users']
     for us in USERS:
+	print(us)
         if us['editcount'] < 100 and rc['timestamp']!=lasttimestamp:
             print(str(us['name'])) 
             lasttimestamp=rc['timestamp']

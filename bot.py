@@ -14,7 +14,7 @@ password=str(userinfo["password"])
 
 def disamigua(links, user):
 	for link in links:
-		PARAMS{
+		PARAMS={
 			"action": "parse",
 			"format": "json",
 			"page": "Pet_door",

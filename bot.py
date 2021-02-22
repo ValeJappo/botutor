@@ -139,7 +139,7 @@ for rc in RECENTCHANGES:
 				b=0
 				brackets=True
 				for l in diff:
-					if brackets and l.replace('+ ', '') != "]":
+					if brackets and l.replace('+ ', '') != "]" and not l.startswith('- '):
 						links[il]=links[il]+l.replace('+ ', '').replace(' ', '').replace('[', '')
 					
 					if l.startswith('+ '):

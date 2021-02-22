@@ -11,6 +11,11 @@ def getchanges(id):
 	add=l for l in diff if l.startswith('+ ')
 	for a in add:
 		print(a)
+		
+def messaggio(utente, testo):
+	#controllare benvenuto
+	#api edit
+		
 def placeholder(ns):
 	print("Namespace "+str(ns))
 

@@ -11,30 +11,6 @@ config_object.read("config.conf")
 userinfo = config_object["INFO"]
 username=str(userinfo["username"])
 password=str(userinfo["password"])
-
-def getchanges(idn, ido):
-	PARAMS5={
-		"action": "query",
-		"format": "json",
-		"prop": "revisions",
-		"revids": str(idn)+"|"+str(ido),
-		"formatversion": "latest",
-		"rvprop": "content|oresscores|sha1",
-		"rvslots": "*"
-	}
-	R = S.get(url=URL, params=PARAMS)
-	DAT5A = R.json()
-	c1=DATA5['query']['pages'][0]['revisions'][0]['slots']['main']['content']
-	c2=DATA5['query']['pages'][0]['revisions'][1]['slots']['main']['content']
-	diff=difflib.ndiff(c1, c2)
-	add=""
-	rem=""
-	for l in diff:
-		if l.startswith('+ '):
-			add=add+l.replace('+ ', '')
-		if l.startswith('- ')
-			rem=rem+l.replace('- ', '')
-	
 		
 def messaggio(utente, testo):
 	#controllare benvenuto

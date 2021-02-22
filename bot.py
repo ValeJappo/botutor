@@ -129,7 +129,7 @@ for rc in RECENTCHANGES:
 				for l in diff:
 					if l.startswith('+ '):
 						add=add+l.replace('+ ', '')
-					if l.startswith('- ')
+					if l.startswith('- '):
 						rem=rem+l.replace('- ', '')
 
 				if

@@ -17,7 +17,7 @@ def disambigua(links, user):
 		PARAMS={
 			"action": "parse",
 			"format": "json",
-			"page": "Pet_door",
+			"page": link,
 			"prop": "wikitext",
 			"formatversion": "2"
 		}

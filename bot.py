@@ -13,7 +13,7 @@ username=str(userinfo["username"])
 password=str(userinfo["password"])
 
 def disamigua(links, user):
-	for link in links
+	for link in links:
 		PARAMS{
 			"action": "parse",
 			"format": "json",

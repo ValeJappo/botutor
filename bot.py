@@ -13,7 +13,7 @@ username=str(userinfo["username"])
 password=str(userinfo["password"])
 
 def getchanges(idn, ido):
-	PARAMS={
+	PARAMS5={
 		"action": "query",
 		"format": "json",
 		"prop": "revisions",
@@ -23,15 +23,18 @@ def getchanges(idn, ido):
 		"rvslots": "*"
 	}
 	R = S.get(url=URL, params=PARAMS)
-	DATA = R.json()
-	c1=DATA['query']['pages'][0]['revisions'][0]['slots']['main']['content']
-	c2=DATA['query']['pages'][0]['revisions'][1]['slots']['main']['content']
+	DAT5A = R.json()
+	c1=DATA5['query']['pages'][0]['revisions'][0]['slots']['main']['content']
+	c2=DATA5['query']['pages'][0]['revisions'][1]['slots']['main']['content']
 	diff=difflib.ndiff(c1, c2)
 	add=""
+	rem=""
 	for l in diff:
 		if l.startswith('+ '):
 			add=add+l.replace('+ ', '')
-	print(add)
+		if l.startswith('- ')
+			rem=rem+l.replace('- ', '')
+	
 		
 def messaggio(utente, testo):
 	#controllare benvenuto
@@ -129,26 +132,49 @@ for rc in RECENTCHANGES:
 			edcount=us['editcount']
 		except KeyError: #Anonym users
 			edcount=0
-		getchanges(rc['revid'], (rc['old_revid']))
 		if edcount < 100 and rc['timestamp']!=lasttimestamp: #todo: verifica che non sia verificato rc["patrolled"]=="" / "unpatrolled (serve patrol/patrolmark); #filtra namespace da ids
-			print(str(us['name'])) 
-			if rc["ns"] == 0:
-				placeholder(0)
-			if rc["ns"] == 1:
-				placeholder(1)
-			if rc["ns"] == 2:
-				placeholder(2)
-			if rc["ns"] == 3:
-				placeholder(3)
-			if rc["ns"] == 6:
-				placeholder(6)
-			if rc["ns"] == 14:
-				placeholder(14)
-			lasttimestamp=rc['timestamp']
-			config_object["DATA"]={
-				"timestamp": lasttimestamp
+			PARAMS5={
+				"action": "query",
+				"format": "json",
+				"prop": "revisions",
+				"revids": str(rc['revid'])+"|"+str(rc['old_revid']),
+				"formatversion": "latest",
+				"rvprop": "content|oresscores|sha1",
+				"rvslots": "*"
 			}
-			with open('config.conf', 'w') as conf:
-				config_object.write(conf)
+			R = S.get(url=URL, params=PARAMS)
+			DAT5A = R.json()
+			if DATA5['query']['pages'][0]['revisions'][1]['oresscores']['goodfaith']['true'] > DATA5['query']['pages'][0]['revisions'][1]['oresscores']['goodfaith']['false']:
+				c1=DATA5['query']['pages'][0]['revisions'][0]['slots']['main']['content']
+				c2=DATA5['query']['pages'][0]['revisions'][1]['slots']['main']['content']
+				diff=difflib.ndiff(c1, c2)
+				add=""
+				rem=""
+				for l in diff:
+					if l.startswith('+ '):
+						add=add+l.replace('+ ', '')
+					if l.startswith('- ')
+						rem=rem+l.replace('- ', '')
+
+				if
+				print(str(us['name'])) 
+				if rc["ns"] == 0:
+					placeholder(0)
+				if rc["ns"] == 1:
+					placeholder(1)
+				if rc["ns"] == 2:
+					placeholder(2)
+				if rc["ns"] == 3:
+					placeholder(3)
+				if rc["ns"] == 6:
+					placeholder(6)
+				if rc["ns"] == 14:
+					placeholder(14)
+				lasttimestamp=rc['timestamp']
+				config_object["DATA"]={
+					"timestamp": lasttimestamp
+				}
+				with open('config.conf', 'w') as conf:
+					config_object.write(conf)
 		else:
 			print("NO - "+str(us['name'])) 

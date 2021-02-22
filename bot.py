@@ -102,7 +102,7 @@ for rc in RECENTCHANGES:
 	print(us)
 	try:
 		edcount=us['editcount']
-	except KeyError #Anonym users
+	except KeyError: #Anonym users
 		edcount=0
         if edcount < 100 and rc['timestamp']!=lasttimestamp:
             print(str(us['name'])) 

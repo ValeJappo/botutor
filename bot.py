@@ -12,7 +12,7 @@ userinfo = config_object["INFO"]
 username=str(userinfo["username"])
 password=str(userinfo["password"])
 
-def disamigua(links, user):
+def disambigua(links, user):
 	for link in links:
 		PARAMS={
 			"action": "parse",

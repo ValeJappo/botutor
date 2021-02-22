@@ -139,16 +139,16 @@ for rc in RECENTCHANGES:
 				b=0
 				brackets=False
 				for l in diff:
-					if brackets and l.replace('+ ', '') != "]" and not l.startswith('- '):
+					if brackets and l.replace('+ ', '').replace(' ', '') != "]" and not l.startswith('- '):
 						try:
 							links[il]=links[il]+l.replace('+ ', '').replace(' ', '').replace('[', '')
 						except IndexError:
 							links.append(l.replace('+ ', '').replace(' ', '').replace('[', ''))
 					
-					if l.replace('+ ', '') == "]" and b==0 and brackets:
+					if l.replace('+ ', '').replace(' ', '') == "]" and b==0 and brackets:
 							b=-1
 						
-					if l.replace('+ ', '') == "]" and b==-1 and brackets:
+					if l.replace('+ ', '').replace(' ', '') == "]" and b==-1 and brackets:
 						b=0
 						il=+1;
 						brackets=False

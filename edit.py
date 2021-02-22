@@ -1,16 +1,19 @@
 import requests
 import os
 
-if os.environ.get('BOTUSERNAME', 'Not Set') == 'Not Set':
+if str(os.environ.get('BOTUSERNAME')) == 'None':
     os.environ['BOTUSERNAME'] = str(raw_input("Username: "))
-if os.environ.get('BOTPASSWORD', 'Not Set') == 'Not Set':
+if str(os.environ.get('BOTPASSWORD')) == 'None':
     os.environ['BOTPASSWORD'] = str(raw_input("Password: "))
+    
+if not os.environ['ITERATIONS'] > 0:
+       os.environ['BOTUSERNAME']=0;
     
 print("Logging in as "+str(os.environ.get('BOTUSERNAME'))+" with password "+str(os.environ.get('BOTPASSWORD')))
 S = requests.Session()
 URL = "https://test.wikipedia.org/w/api.php"
 
-# token
+# Token login
 PARAMS0 = {
     'action':"query",
     'meta':"tokens",
@@ -19,7 +22,7 @@ PARAMS0 = {
 }
 
 R = S.get(url=URL, params=PARAMS0)
-DATA = R.json()
+DATA0 = R.json()
 
 LOGIN_TOKEN = DATA['query']['tokens']['logintoken']
 
@@ -37,6 +40,32 @@ PARAMS1 = {
 }
 
 R = S.post(URL, data=PARAMS1)
-DATA = R.json()
+DATA1 = R.json()
 
-print(DATA)
+#Token CSRF
+PARAMS2 = {
+    "action": "query",
+    "meta": "tokens",
+    "format": "json"
+}
+
+R = S.get(url=URL, params=PARAMS2)
+DATA2 = R.json()
+
+CSRF_TOKEN = DATA2['query']['tokens']['csrftoken']
+
+#Edit
+PARAMS3 = {
+    "action": "edit",
+    "title": "Test",
+    "token": CSRF_TOKEN,
+    "format": "json",
+    "appendtext": "Test"+os.environ['ITERATIONS']
+}
+
+R = S.post(URL, data=PARAMS3)
+DATA3 = R.json()
+
+os.environ['BOTUSERNAME']
+
+print(DATA3)

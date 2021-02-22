@@ -134,15 +134,36 @@ for rc in RECENTCHANGES:
 				diff=difflib.ndiff(c1, c2)
 				add=""
 				rem=""
+				links=""
+				il=0;
+				b=0
+				brackets=True
 				for l in diff:
 					if l.startswith('+ '):
 						add=add+l.replace('+ ', '')
+						if l.replace('+ ', '') == "[" and b==0:
+							b=+1
+						if l.replace('+ ', '') == "[" and b==1:
+							b=0
+							brackets=True	
+						if l.replace('+ ', '') == "]" and b==0 and brackets:
+							b=-1
+						
+						if l.replace('+ ', '') == "]" and b==-1 and brackets:
+							b=0
+							il=+1;
+							brackets=False
+							
+					if brackets and l.replace('+ ', '') != "]":
+						links[il]=links[il]+l.replace('+ ', '')
+					
 					if l.startswith('- '):
 						rem=rem+l.replace('- ', '')
 
 				print(str(us['name'])) 
 				print(add)
 				print(rem)
+				print(links)
 				if rc["ns"] == 0:
 					control(add, rem, "Ciao", "", messaggio("U", "T"))
 				if rc["ns"] == 1:

@@ -103,6 +103,8 @@ for us in USERS:
 	except KeyError: #Anonym users
 		edcount=0
 	if edcount < 100 and rc['timestamp']!=lasttimestamp: #todo: verifica che non sia verificato rc["patrolled"]=="" / "unpatrolled (serve patrol/patrolmark); #filtra namespace da ids
+		print(rc['timestamp'])
+		print(lasttimestamp)
 		print(str(us['name'])) 
 		if rc["ns"] == 0:
 			placeholder(0)

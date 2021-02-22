@@ -139,6 +139,9 @@ for rc in RECENTCHANGES:
 				b=0
 				brackets=True
 				for l in diff:
+					if brackets and l.replace('+ ', '') != "]":
+						links[il]=links[il]+l.replace('+ ', '').replace(' ', '').replace('[', '')
+					
 					if l.startswith('+ '):
 						add=add+l.replace('+ ', '')
 						if l.replace('+ ', '') == "[" and b==0:
@@ -153,9 +156,6 @@ for rc in RECENTCHANGES:
 							b=0
 							il=+1;
 							brackets=False
-							
-					if brackets and l.replace('+ ', '') != "]":
-						links[il]=links[il]+l.replace('+ ', '')
 					
 					if l.startswith('- '):
 						rem=rem+l.replace('- ', '')
@@ -163,7 +163,10 @@ for rc in RECENTCHANGES:
 				print(str(us['name'])) 
 				print(add)
 				print(rem)
-				print(links)
+				for link in links:
+					if link!="":
+						print(link)
+						
 				if rc["ns"] == 0:
 					control(add, rem, "Ciao", "", messaggio("U", "T"))
 				if rc["ns"] == 1:

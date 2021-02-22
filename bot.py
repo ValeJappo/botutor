@@ -11,7 +11,13 @@ config_object.read("config.conf")
 userinfo = config_object["INFO"]
 username=str(userinfo["username"])
 password=str(userinfo["password"])
-		
+	
+def control(add, rem, sadd, srem, funct):
+	if add.find(sadd) >= 0 or sadd='':
+		if rem.find(srem) >=0 or srem='':
+			funct()
+	
+
 def messaggio(utente, testo):
 	#controllare benvenuto
 	#api edit
@@ -134,7 +140,7 @@ for rc in RECENTCHANGES:
 
 				print(str(us['name'])) 
 				if rc["ns"] == 0:
-					placeholder(0)
+					control(add, rem, "Ciao", "", messaggio("U", "T"))
 				if rc["ns"] == 1:
 					placeholder(1)
 				if rc["ns"] == 2:

@@ -61,7 +61,7 @@ CSRF_TOKEN = DATA2['query']['tokens']['csrftoken']
 #Analyze recent changes
 try:
 	lasttimestamp=str(config_object["DATA"]["timestamp"])
-except NameError:
+except KeyError:
 	lasttimestamp="2021-01-31T11:13:31Z"
 
 PARAMS3 ={

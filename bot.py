@@ -99,10 +99,10 @@ for rc in RECENTCHANGES:
 	USERS=DATA4['query']['users']
 for us in USERS:
 	print(us)
-		try:
-			edcount=us['editcount']
-		except KeyError: #Anonym users
-			edcount=0
+	try:
+		edcount=us['editcount']
+	except KeyError: #Anonym users
+		edcount=0
 	if edcount < 100 and rc['timestamp']!=lasttimestamp:
 		print(str(us['name'])) 
 		lasttimestamp=rc['timestamp']

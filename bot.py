@@ -123,7 +123,7 @@ for rc in RECENTCHANGES:
 	R = S.get(url=URL, params=PARAMS4)
 	DATA4 = R.json()
 	USERS=DATA4['query']['users']
-	print(DATA4)
+	print(rc)
 
 	for us in USERS:
 		try:

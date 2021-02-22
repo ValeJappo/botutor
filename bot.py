@@ -61,16 +61,18 @@ CSRF_TOKEN = DATA2['query']['tokens']['csrftoken']
 #Analyze recent changes
 try:
 	PARAMS3["rcstart"]=str(config_object["DATA"]["timestamp"])
+	PARAMS3["rclimit"]="max"
+	PARAMS3["rcdir"]="newer"
 except KeyError:
 	lasttimestamp=0
+	PARAMS3["rclimit"]=1
+	PARAMS3["rcdir"]="older"
 
 PARAMS3 ={
 	"action": "query",
 	"format": "json",
 	"list": "recentchanges",
 	"continue": "-||",
-	"rclimit":"max",
-	"rcdir":"newer",
 	"rcnamespace": "0|2",
 	"rcprop": "title|user|userid|timestamp",
 	"rctype": "edit|new",

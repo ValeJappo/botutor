@@ -139,6 +139,8 @@ for rc in RECENTCHANGES:
 						rem=rem+l.replace('- ', '')
 
 				print(str(us['name'])) 
+				print(add)
+				print(rem)
 				if rc["ns"] == 0:
 					control(add, rem, "Ciao", "", messaggio("U", "T"))
 				if rc["ns"] == 1:

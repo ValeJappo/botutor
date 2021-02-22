@@ -3,7 +3,7 @@ import os
 from configparser import ConfigParser
 
 def placeholder(ns):
-	print("Namespace "+ns)
+	print("Namespace "+str(ns))
 
 config_object = ConfigParser()
 config_object.read("config.conf")

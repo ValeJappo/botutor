@@ -3,7 +3,7 @@ config_object = ConfigParser()
 
 config_object["INFO"] = {
     "username": str(raw_input("Username :")),
-    "password": "str(raw_input("Password :"))
+    "password": str(raw_input("Password :"))
 }
 
 with open('config.conf', 'w') as conf:

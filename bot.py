@@ -24,7 +24,6 @@ def getchanges(idn, ido):
 	}
 	R = S.get(url=URL, params=PARAMS)
 	DATA = R.json()
-	print(DATA)
 	c1=DATA['query']['pages'][0]['revisions'][0]['slots']['main']['content']
 	c2=DATA['query']['pages'][1]['revisions'][0]['slots']['main']['content']
 	diff=difflib.ndiff(c1, c2)
@@ -110,7 +109,6 @@ except (KeyError, NameError) as error:
 
 R = S.get(url=URL, params=PARAMS3)
 DATA3 = R.json()
-print(DATA3)
 RECENTCHANGES = DATA3['query']['recentchanges']
 for rc in RECENTCHANGES:
 	PARAMS4={

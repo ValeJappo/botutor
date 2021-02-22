@@ -23,7 +23,6 @@ def disambigua(links, user):
 		}
 		R = S.get(url=URL, params=PARAMS)
 		DATA = R.json()
-		print(DATA)
 		if DATA['parse']['wikitext'].find("{{Disambigua}}") >= 0:
 			print("DISAMBIGUA")
 

@@ -85,19 +85,18 @@ R = S.get(url=URL, params=PARAMS3)
 DATA3 = R.json()
 
 RECENTCHANGES = DATA3['query']['recentchanges']
-
 for rc in RECENTCHANGES:
-PARAMS4={
-	"action": "query",
-	"format": "json",
-	"list": "users",
-	"usprop": "blockinfo|editcount|gender",
-	"ususers": rc['user']
-}
-R = S.get(url=URL, params=PARAMS4)
-DATA4 = R.json()
-print(DATA4)
-USERS=DATA4['query']['users']
+	PARAMS4={
+		"action": "query",
+		"format": "json",
+		"list": "users",
+		"usprop": "blockinfo|editcount|gender",
+		"ususers": rc['user']
+	}
+	R = S.get(url=URL, params=PARAMS4)
+	DATA4 = R.json()
+	print(DATA4)
+	USERS=DATA4['query']['users']
 for us in USERS:
 	print(us)
 		try:

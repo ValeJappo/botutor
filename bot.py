@@ -159,5 +159,7 @@ for rc in RECENTCHANGES:
 				}
 				with open('config.conf', 'w') as conf:
 					config_object.write(conf)
+			else:
+				print("NO - "+str(us['name']))
 		else:
 			print("NO - "+str(us['name'])) 

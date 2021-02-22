@@ -132,7 +132,6 @@ for rc in RECENTCHANGES:
 					if l.startswith('- '):
 						rem=rem+l.replace('- ', '')
 
-				if
 				print(str(us['name'])) 
 				if rc["ns"] == 0:
 					placeholder(0)

@@ -24,6 +24,7 @@ def getchanges(idn, ido):
 	}
 	R = S.get(url=URL, params=PARAMS)
 	DATA = R.json()
+	print(DATA)
 	c1=DATA['query']['pages'][0]['revisions'][0]['content']
 	c2=DATA['query']['pages'][1]['revisions'][0]['content']
 	diff=difflib.ndiff(c1, c2)

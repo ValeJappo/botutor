@@ -100,7 +100,11 @@ for rc in RECENTCHANGES:
     USERS=DATA4['query']['users']
     for us in USERS:
 	print(us)
-        if us['editcount'] < 100 and rc['timestamp']!=lasttimestamp:
+	try:
+		edcount=us['editcount']
+	except KeyError #Anonym users
+		edcount=0
+        if edcount < 100 and rc['timestamp']!=lasttimestamp:
             print(str(us['name'])) 
             lasttimestamp=rc['timestamp']
             config_object["DATA"]={

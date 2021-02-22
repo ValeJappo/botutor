@@ -28,11 +28,12 @@ print(LOGIN_TOKEN)
 # Login
 
 PARAMS1 = {
-    'action':"login",
-    'lgname':str(os.environ.get('BOTUSERNAME')),
-    'lgpassword':str(os.environ.get('BOTPASSWORD')),
-    'lgtoken':LOGIN_TOKEN,
-    'format':"json"
+    'action': "clientlogin",
+    'username': os.environ['BOTUSERNAME'],
+    'password': os.environ['BOTPASSWORD'],
+    'loginreturnurl': 'http://127.0.0.1:5000/',
+    'logintoken': LOGIN_TOKEN,
+    'format': "json"
 }
 
 R = S.post(URL, data=PARAMS1)

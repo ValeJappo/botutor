@@ -3,10 +3,29 @@ import os
 import difflib
 from configparser import ConfigParser
 
-def getchanges(id):
-	params={
-		#...
+S = requests.Session()
+URL = "https://test.wikipedia.org/w/api.php"
+
+config_object = ConfigParser()
+config_object.read("config.conf")
+userinfo = config_object["INFO"]
+username=str(userinfo["username"])
+password=str(userinfo["password"])
+
+def getchanges(idn, ido):
+	PARAMS={
+		"action": "query",
+		"format": "json",
+		"prop": "revisions",
+		"revids": str(idn)+"|"+str(ido),
+		"formatversion": "latest",
+		"rvprop": "content|oresscores|sha1",
+		"rvslots": "*"
 	}
+	R = S.get(url=URL, params=PARAMS)
+	DATA = R.json()
+	c1=DATA['quey']['pages'][0]['revisions'][0]['content']
+	c2=DATA['quey']['pages'][1]['revisions'][0]['content']
 	diff=difflib.ndiff(c1, c2)
 	add=l for l in diff if l.startswith('+ ')
 	for a in add:
@@ -19,14 +38,6 @@ def messaggio(utente, testo):
 def placeholder(ns):
 	print("Namespace "+str(ns))
 
-config_object = ConfigParser()
-config_object.read("config.conf")
-userinfo = config_object["INFO"]
-username=str(userinfo["username"])
-password=str(userinfo["password"])
-
-S = requests.Session()
-URL = "https://test.wikipedia.org/w/api.php"
 
 # Token login
 PARAMS0 = {
@@ -116,7 +127,7 @@ for us in USERS:
 		edcount=us['editcount']
 	except KeyError: #Anonym users
 		edcount=0
-	getchanges(us['revid'])
+	getchanges(us['revid'], (us['old_revid'])
 	if edcount < 100 and rc['timestamp']!=lasttimestamp: #todo: verifica che non sia verificato rc["patrolled"]=="" / "unpatrolled (serve patrol/patrolmark); #filtra namespace da ids
 		print(str(us['name'])) 
 		if rc["ns"] == 0:

@@ -134,7 +134,7 @@ for rc in RECENTCHANGES:
 				diff=difflib.ndiff(c1, c2)
 				add=""
 				rem=""
-				links[]
+				links=[]
 				il=0;
 				b=0
 				brackets=True

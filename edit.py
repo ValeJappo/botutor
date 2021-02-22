@@ -1,5 +1,11 @@
 import requests
 import os
+
+if os.environ.get('BOTUSERNAME', 'Not Set') == 'Not Set':
+    os.environ['BOTUSERNAME'] = input("Username: ")
+if os.environ.get('BOTPASSWORD', 'Not Set') == 'Not Set':
+    os.environ['BOTPASSWORD'] = input("Password: ")
+    
 print("Logging in as "+str(os.environ.get('BOTUSERNAME'))+" with password "+str(os.environ.get('BOTPASSWORD')))
 S = requests.Session()
 URL = "https://test.wikipedia.org/w/api.php"

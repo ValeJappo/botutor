@@ -60,18 +60,17 @@ CSRF_TOKEN = DATA2['query']['tokens']['csrftoken']
 
 #Analyze recent changes
 try:
-	lasttimestamp=str(config_object["DATA"]["timestamp"])
+	PARAMS3["rcstart"]=str(config_object["DATA"]["timestamp"])
 except KeyError:
-	lasttimestamp="2021-01-31T11:13:31Z"
+	print("No timestamp aviable")
 
 PARAMS3 ={
 	"action": "query",
 	"format": "json",
 	"list": "recentchanges",
 	"continue": "-||",
-    "rcstart":lasttimestamp,
-    "rclimit":"max",
-    "rcdir":"newer",
+	"rclimit":"max",
+	"rcdir":"newer",
 	"rcnamespace": "0|2",
 	"rcprop": "title|user|userid|timestamp",
 	"rctype": "edit|new",

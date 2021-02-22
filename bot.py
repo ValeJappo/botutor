@@ -11,7 +11,25 @@ config_object.read("config.conf")
 userinfo = config_object["INFO"]
 username=str(userinfo["username"])
 password=str(userinfo["password"])
-	
+
+def disamigua(links, user):
+	status=False
+	exit=False
+	while !status || exit:
+		for link in links
+			PARAMS{
+				"action": "parse",
+				"format": "json",
+				"page": "Pet_door",
+				"prop": "wikitext",
+				"formatversion": "2"
+			}
+			R = S.get(url=URL, params=PARAMS)
+			DATA = R.json()
+			if DATA['parse']['wikitext'].find("{{Disambigua}}") >= 0<:
+				print("DISAMBIGUA")
+
+
 def control(add, rem, sadd, srem, funct):
 	if add.find(sadd) >= 0 or sadd=='':
 		print(add.find(sadd))
@@ -138,7 +156,7 @@ for rc in RECENTCHANGES:
 				il=0;
 				b=0
 				brackets=False
-				for l in diff:
+				for l in diff:#todo: se si divide in due un link ([[Giappone]] --> [[Gia]][[ppone]]), solo il secondo viene considerato
 					if brackets and l.replace('+ ', '').replace(' ', '') != "]" and not l.startswith('- '):
 						try:
 							links[il]=links[il]+l.replace('+ ', '').replace(' ', '').replace('[', '')
@@ -171,18 +189,9 @@ for rc in RECENTCHANGES:
 					if link!="":
 						print(link)
 						
-				if rc["ns"] == 0:
-					control(add, rem, "Ciao", "", messaggio("U", "T"))
-				if rc["ns"] == 1:
-					placeholder(1)
-				if rc["ns"] == 2:
-					placeholder(2)
-				if rc["ns"] == 3:
-					placeholder(3)
-				if rc["ns"] == 6:
-					placeholder(6)
-				if rc["ns"] == 14:
-					placeholder(14)
+				#controlli
+				disambigua(links, rc['user'])
+				
 				lasttimestamp=rc['timestamp']
 				config_object["DATA"]={
 					"timestamp": lasttimestamp

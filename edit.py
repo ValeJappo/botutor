@@ -6,9 +6,6 @@ if str(os.environ.get('BOTUSERNAME')) == 'None':
 if str(os.environ.get('BOTPASSWORD')) == 'None':
     os.environ['BOTPASSWORD'] = str(raw_input("Password: "))
     
-if not os.environ['ITERATIONS'] > 0:
-       os.environ['BOTUSERNAME']=0
-    
 print("Logging in as "+str(os.environ.get('BOTUSERNAME'))+" with password "+str(os.environ.get('BOTPASSWORD')))
 S = requests.Session()
 URL = "https://test.wikipedia.org/w/api.php"
@@ -60,12 +57,10 @@ PARAMS3 = {
     "title": "Test",
     "token": CSRF_TOKEN,
     "format": "json",
-    "appendtext": "Test"+os.environ['ITERATIONS']
+    "appendtext": "Test"
 }
 
 R = S.post(URL, data=PARAMS3)
 DATA3 = R.json()
-
-os.environ['ITERATIONS']=+1
 
 print(DATA3)

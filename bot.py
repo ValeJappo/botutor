@@ -126,6 +126,8 @@ for rc in RECENTCHANGES:
 			}
 			R = S.get(url=URL, params=PARAMS5)
 			DATA5 = R.json()
+			print(DATA5['query']['pages'][0]['revisions'][1]['oresscores']['goodfaith']['true']))
+			print(DATA5['query']['pages'][0]['revisions'][1]['oresscores']['goodfaith']['false']))
 			if float(DATA5['query']['pages'][0]['revisions'][1]['oresscores']['goodfaith']['true']) >= float(DATA5['query']['pages'][0]['revisions'][1]['oresscores']['goodfaith']['false']):
 				c1=DATA5['query']['pages'][0]['revisions'][0]['slots']['main']['content']
 				c2=DATA5['query']['pages'][0]['revisions'][1]['slots']['main']['content']

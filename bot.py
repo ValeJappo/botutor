@@ -73,6 +73,7 @@ PARAMS3 ={
 
 try:
 	PARAMS3["rcstart"]=str(config_object["DATA"]["timestamp"])
+	lasttimestamp=str(config_object["DATA"]["timestamp"])
 	PARAMS3["rclimit"]="max"
 	PARAMS3["rcdir"]="newer"
 except (KeyError, NameError) as error:

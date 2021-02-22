@@ -25,13 +25,6 @@ def disambigua(links, user):
 		DATA = R.json()
 		if DATA['parse']['wikitext'].find("{{Disambigua}}") >= 0:
 			print("DISAMBIGUA")
-
-
-def control(add, rem, sadd, srem, funct):
-	if add.find(sadd) >= 0 or sadd=='':
-		print(add.find(sadd))
-		if rem.find(srem) >=0 or srem=='':
-			funct()
 	
 
 def messaggio(utente, testo):

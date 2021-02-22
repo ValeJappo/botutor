@@ -75,7 +75,7 @@ try:
 	PARAMS3["rcstart"]=str(config_object["DATA"]["timestamp"])
 	PARAMS3["rclimit"]="max"
 	PARAMS3["rcdir"]="newer"
-except KeyError:
+except (KeyError, NameError) as error:
 	lasttimestamp=0
 	PARAMS3["rclimit"]=1
 	PARAMS3["rcdir"]="older"

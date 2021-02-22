@@ -13,8 +13,8 @@ username=str(userinfo["username"])
 password=str(userinfo["password"])
 	
 def control(add, rem, sadd, srem, funct):
-	if add.find(sadd) >= 0 or sadd='':
-		if rem.find(srem) >=0 or srem='':
+	if add.find(sadd) >= 0 or sadd=='':
+		if rem.find(srem) >=0 or srem=='':
 			funct()
 	
 

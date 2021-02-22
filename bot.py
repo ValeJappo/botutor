@@ -67,7 +67,7 @@ PARAMS3 ={
 	"list": "recentchanges",
 	"continue": "-||",
 	"rcnamespace": "0|2",
-	"rcprop": "title|user|userid|timestamp|flags|rctype|ids", #patrolled <- serve patrol/patrolmarks
+	"rcprop": "title|user|userid|timestamp|flags|ids", #patrolled <- serve patrol/patrolmarks
 	"rctype": "edit|new",
 	"rcnamespace": 0|1|2|3|6|14, #todo: +6, 14 (file, cat) per verifiche.
 	"rctoponly": 1	

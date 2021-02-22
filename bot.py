@@ -123,12 +123,13 @@ for rc in RECENTCHANGES:
 	DATA4 = R.json()
 	USERS=DATA4['query']['users']
 	print(DATA4)
+i=0
 for us in USERS:
 	try:
 		edcount=us['editcount']
 	except KeyError: #Anonym users
 		edcount=0
-	getchanges(us['revid'], (us['old_revid']))
+	getchanges(RECENTCHANGES[i]['revid'], (RECENTCHANGES[i]['old_revid']))
 	if edcount < 100 and rc['timestamp']!=lasttimestamp: #todo: verifica che non sia verificato rc["patrolled"]=="" / "unpatrolled (serve patrol/patrolmark); #filtra namespace da ids
 		print(str(us['name'])) 
 		if rc["ns"] == 0:
@@ -151,3 +152,5 @@ for us in USERS:
 			config_object.write(conf)
 	else:
 		print("NO - "+str(us['name'])) 
+	i=+1
+i=0

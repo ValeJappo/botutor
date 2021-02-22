@@ -39,7 +39,7 @@ PARAMS1 = {
 
 R = S.post(URL, data=PARAMS1)
 DATA1 = R.json()
-if DATA1["clientlogin"][0]["status"]=="PASS":
+if DATA1["clientlogin"]["status"]=="PASS":
 	print("Logged in as "+username);
 else:
 	print("Login error."+DATA1)

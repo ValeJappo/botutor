@@ -123,34 +123,32 @@ for rc in RECENTCHANGES:
 	DATA4 = R.json()
 	USERS=DATA4['query']['users']
 	print(DATA4)
-i=0
-for us in USERS:
-	try:
-		edcount=us['editcount']
-	except KeyError: #Anonym users
-		edcount=0
-	getchanges(RECENTCHANGES[i]['revid'], (RECENTCHANGES[i]['old_revid']))
-	if edcount < 100 and rc['timestamp']!=lasttimestamp: #todo: verifica che non sia verificato rc["patrolled"]=="" / "unpatrolled (serve patrol/patrolmark); #filtra namespace da ids
-		print(str(us['name'])) 
-		if rc["ns"] == 0:
-			placeholder(0)
-		if rc["ns"] == 1:
-			placeholder(1)
-		if rc["ns"] == 2:
-			placeholder(2)
-		if rc["ns"] == 3:
-			placeholder(3)
-		if rc["ns"] == 6:
-			placeholder(6)
-		if rc["ns"] == 14:
-			placeholder(14)
-		lasttimestamp=rc['timestamp']
-		config_object["DATA"]={
-			"timestamp": lasttimestamp
-		}
-		with open('config.conf', 'w') as conf:
-			config_object.write(conf)
-	else:
-		print("NO - "+str(us['name'])) 
-	i=+1
-i=0
+
+	for us in USERS:
+		try:
+			edcount=us['editcount']
+		except KeyError: #Anonym users
+			edcount=0
+		getchanges(rc['revid'], (rc['old_revid']))
+		if edcount < 100 and rc['timestamp']!=lasttimestamp: #todo: verifica che non sia verificato rc["patrolled"]=="" / "unpatrolled (serve patrol/patrolmark); #filtra namespace da ids
+			print(str(us['name'])) 
+			if rc["ns"] == 0:
+				placeholder(0)
+			if rc["ns"] == 1:
+				placeholder(1)
+			if rc["ns"] == 2:
+				placeholder(2)
+			if rc["ns"] == 3:
+				placeholder(3)
+			if rc["ns"] == 6:
+				placeholder(6)
+			if rc["ns"] == 14:
+				placeholder(14)
+			lasttimestamp=rc['timestamp']
+			config_object["DATA"]={
+				"timestamp": lasttimestamp
+			}
+			with open('config.conf', 'w') as conf:
+				config_object.write(conf)
+		else:
+			print("NO - "+str(us['name'])) 

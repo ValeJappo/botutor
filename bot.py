@@ -62,7 +62,7 @@ CSRF_TOKEN = DATA2['query']['tokens']['csrftoken']
 try:
 	PARAMS3["rcstart"]=str(config_object["DATA"]["timestamp"])
 except KeyError:
-	lasttimestamp=null
+	lasttimestamp=0
 
 PARAMS3 ={
 	"action": "query",

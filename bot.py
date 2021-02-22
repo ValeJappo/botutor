@@ -23,6 +23,7 @@ def getchanges(idn, ido):
 		"rvslots": "*"
 	}
 	R = S.get(url=URL, params=PARAMS)
+	DATA = R.json()
 	c1=DATA['query']['pages'][0]['revisions'][0]['slots']['main']['content']
 	c2=DATA['query']['pages'][0]['revisions'][1]['slots']['main']['content']
 	diff=difflib.ndiff(c1, c2)

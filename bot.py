@@ -95,7 +95,7 @@ for rc in RECENTCHANGES:
     R = S.get(url=URL, params=PARAMS4)
     DATA4 = R.json()
     print(DATA4)
-    USERS=DATA4['query']['users']
+    USERS=DATA4['query'][0]['users']
     for us in USERS:
         if us['editcount'] < 100 and rc['timestamp']!=lasttimestamp:
             print(str(us['name'])) 

@@ -66,7 +66,6 @@ PARAMS3 ={
 	"format": "json",
 	"list": "recentchanges",
 	"continue": "-||",
-	"rcnamespace": "0|2",
 	"rcprop": "title|user|userid|timestamp|flags|ids", #patrolled <- serve patrol/patrolmarks
 	"rctype": "edit|new",
 	"rclimit": "max",

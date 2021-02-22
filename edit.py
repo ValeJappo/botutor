@@ -1,6 +1,6 @@
 import requests
 import os
-print("Logging in as"+str(os.environ.get('BOT-USERNAME')))
+print("Logging in as "+str(os.environ.get('BOTUSERNAME'))+" with password "+(os.environ.get('BOTPASSWORD')))
 S = requests.Session()
 URL = "https://test.wikipedia.org/w/api.php"
 
@@ -23,8 +23,8 @@ print(LOGIN_TOKEN)
 
 PARAMS1 = {
     'action':"login",
-    'lgname':str(os.environ.get('USERNAME')),
-    'lgpassword':str(os.environ.get('BOT-PASSWORD')),
+    'lgname':str(os.environ.get('BOTUSERNAME')),
+    'lgpassword':str(os.environ.get('BOTPASSWORD')),
     'lgtoken':LOGIN_TOKEN,
     'format':"json"
 }

@@ -70,7 +70,7 @@ PARAMS3 ={
 	"rctype": "edit|new",
 	"rclimit": "max",
 	"rcdir" : "newer",
-	"rcnamespace": 0|1|2|3|6|14, #todo: +6, 14 (file, cat) per verifiche.
+	"rcnamespace": "0|1|2|3|6|14", #todo: +6, 14 (file, cat) per verifiche.
 	"rctoponly": 1	
 }
 

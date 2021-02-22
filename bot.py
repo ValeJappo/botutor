@@ -134,7 +134,7 @@ for rc in RECENTCHANGES:
 				diff=difflib.ndiff(c1, c2)
 				add=""
 				rem=""
-				links=["]*100
+				links=[""]*100
 				il=0;
 				b=0
 				brackets=True

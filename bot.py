@@ -110,6 +110,6 @@ for us in USERS:
 			"timestamp": lasttimestamp
 		}
 		with open('config.conf', 'w') as conf:
-		config_object.write(conf)
+			config_object.write(conf)
 	else:
 		print("NO - "+str(us['name'])) 

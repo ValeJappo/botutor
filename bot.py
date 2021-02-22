@@ -13,21 +13,18 @@ username=str(userinfo["username"])
 password=str(userinfo["password"])
 
 def disamigua(links, user):
-	status=False
-	exit=False
-	while !status || exit:
-		for link in links
-			PARAMS{
-				"action": "parse",
-				"format": "json",
-				"page": "Pet_door",
-				"prop": "wikitext",
-				"formatversion": "2"
-			}
-			R = S.get(url=URL, params=PARAMS)
-			DATA = R.json()
-			if DATA['parse']['wikitext'].find("{{Disambigua}}") >= 0<:
-				print("DISAMBIGUA")
+	for link in links
+		PARAMS{
+			"action": "parse",
+			"format": "json",
+			"page": "Pet_door",
+			"prop": "wikitext",
+			"formatversion": "2"
+		}
+		R = S.get(url=URL, params=PARAMS)
+		DATA = R.json()
+		if DATA['parse']['wikitext'].find("{{Disambigua}}") >= 0<:
+			print("DISAMBIGUA")
 
 
 def control(add, rem, sadd, srem, funct):

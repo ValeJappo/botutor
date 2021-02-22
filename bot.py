@@ -145,7 +145,7 @@ for rc in RECENTCHANGES:
 							b=+1
 						if l.replace('+ ', '') == "[" and b==1:
 							b=0
-							links[li]=""
+							links[il]=""
 							brackets=True	
 						if l.replace('+ ', '') == "]" and b==0 and brackets:
 							b=-1

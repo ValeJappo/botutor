@@ -134,13 +134,16 @@ for rc in RECENTCHANGES:
 				diff=difflib.ndiff(c1, c2)
 				add=""
 				rem=""
-				links=[""]*100
+				links=[]
 				il=0;
 				b=0
 				brackets=True
 				for l in diff:
 					if brackets and l.replace('+ ', '') != "]" and not l.startswith('- '):
-						links[il]=links[il]+l.replace('+ ', '').replace(' ', '').replace('[', '')
+						try:
+							links[il]=links[il]+l.replace('+ ', '').replace(' ', '').replace('[', '')
+						except IndexError:
+							links.append(l.replace('+ ', '').replace(' ', '').replace('[', ''))
 					
 					if l.startswith('+ '):
 						add=add+l.replace('+ ', '')

@@ -155,7 +155,7 @@ for rc in RECENTCHANGES:
 				brackets=False
 				
 				for l in diff:#todo: se si divide in due un link ([[Giappone]] --> [[Gia]][[ppone]]), solo il secondo viene considerato
-					if brackets and l.replace('+ ', '').replace(' ', '') != "]" and not l.startswith('- '):
+					if brackets and l.replace('+ ', '').replace(' ', '') != "]" and l.replace('+ ', '').replace(' ', '') != "|" and not l.startswith('- '):
 						try:
 							links[il]=links[il]+l[2:].replace('[', '')
 						except IndexError:

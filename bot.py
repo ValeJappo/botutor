@@ -146,8 +146,13 @@ for rc in RECENTCHANGES:
 					diff=c1
 					newpage=True
 					print(diff)
-					
+				add=""
+				rem=""
+				links=[]
+				il=0;
+				b=0
 				brackets=False
+				
 				for l in diff:#todo: se si divide in due un link ([[Giappone]] --> [[Gia]][[ppone]]), solo il secondo viene considerato
 					if brackets and l.replace('+ ', '').replace(' ', '') != "]" and not l.startswith('- '):
 						try:

@@ -14,18 +14,21 @@ password=str(userinfo["password"])
 
 def disambigua(links, user):
 	for link in links:
-		PARAMS={
-			"action": "parse",
-			"format": "json",
-			"page": link,
-			"prop": "wikitext",
-			"formatversion": "2"
-		}
-		R = S.get(url=URL, params=PARAMS)
-		DATA = R.json()
-		if DATA['parse']['wikitext'].find("{{Disambigua}}") >= 0:
-			print("DISAMBIGUA")
-	
+		try:
+			PARAMS={
+				"action": "parse",
+				"format": "json",
+				"page": link,
+				"prop": "wikitext",
+				"formatversion": "2"
+			}
+			R = S.get(url=URL, params=PARAMS)
+			DATA = R.json()
+			if DATA['parse']['wikitext'].find("{{Disambigua}}") >= 0:
+				print("DISAMBIGUA")
+		except KeyError: #Page do not exist
+			print("Non esistente")			
+
 
 def messaggio(utente, testo):
 	#controllare benvenuto

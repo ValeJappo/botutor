@@ -135,13 +135,11 @@ for rc in RECENTCHANGES:
 			}
 			R = S.get(url=URL, params=PARAMS5)
 			DATA5 = R.json()
-			print(DATA5)
 			if True:#float(DATA5['query']['pages'][0]['revisions'][1]['oresscores']['goodfaith']['true']) >= float(DATA5['query']['pages'][0]['revisions'][1]['oresscores']['goodfaith']['false']):
 				c1=DATA5['query']['pages'][0]['revisions'][0]['slots']['main']['content']
 				try:
 					c2=DATA5['query']['pages'][0]['revisions'][1]['slots']['main']['content']
 					diff=difflib.ndiff(c1, c2)
-					print(diff)
 					newpage=False
 				except IndexError: #New page
 					diff=c1
@@ -156,7 +154,7 @@ for rc in RECENTCHANGES:
 				for l in diff:#todo: se si divide in due un link ([[Giappone]] --> [[Gia]][[ppone]]), solo il secondo viene considerato
 					if brackets and l.replace('+ ', '').replace(' ', '') != "]" and not l.startswith('- '):
 						try:
-							links[il]=links[il]+l.replace('+ ', '').replace(' ', '').replace('[', '')
+							links[il]=links[il]+l[2:].replace('[', '')
 						except IndexError:
 							links.append(l.replace('+ ', '').replace(' ', '').replace('[', ''))
 					

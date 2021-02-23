@@ -23,7 +23,6 @@ def disambigua(links, user):
 		}
 		R = S.get(url=URL, params=PARAMS)
 		DATA = R.json()
-		print(DATA)
 		if DATA['parse']['wikitext'].find("{{Disambigua}}") >= 0:
 			print("DISAMBIGUA")
 	
@@ -142,6 +141,7 @@ for rc in RECENTCHANGES:
 				try:
 					c2=DATA5['query']['pages'][0]['revisions'][1]['slots']['main']['content']
 					diff=difflib.ndiff(c1, c2)
+					print(diff)
 					newpage=False
 				except IndexError: #New page
 					diff=c1

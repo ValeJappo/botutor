@@ -138,13 +138,15 @@ for rc in RECENTCHANGES:
 			print(DATA5)
 			if True:#float(DATA5['query']['pages'][0]['revisions'][1]['oresscores']['goodfaith']['true']) >= float(DATA5['query']['pages'][0]['revisions'][1]['oresscores']['goodfaith']['false']):
 				c1=DATA5['query']['pages'][0]['revisions'][0]['slots']['main']['content']
-				c2=DATA5['query']['pages'][0]['revisions'][1]['slots']['main']['content']
-				diff=difflib.ndiff(c1, c2)
-				add=""
-				rem=""
-				links=[]
-				il=0;
-				b=0
+				try:
+					c2=DATA5['query']['pages'][0]['revisions'][1]['slots']['main']['content']
+					diff=difflib.ndiff(c1, c2)
+					newpage=False
+				except IndexError: #New page
+					diff=c1
+					newpage=True
+					print(diff)
+					
 				brackets=False
 				for l in diff:#todo: se si divide in due un link ([[Giappone]] --> [[Gia]][[ppone]]), solo il secondo viene considerato
 					if brackets and l.replace('+ ', '').replace(' ', '') != "]" and not l.startswith('- '):
@@ -156,21 +158,29 @@ for rc in RECENTCHANGES:
 					if l.replace('+ ', '').replace(' ', '') == "]" and b==0 and brackets:
 							b=-1
 						
-					if l.replace('+ ', '').replace(' ', '') == "]" and b==-1 and brackets:
+					if (l.replace('+ ', '').replace(' ', '') == "]" and b==-1 and brackets) or (l.replace('+ ', '').replace(' ', '') == "|" and brackets):
 						b=0
 						il=+1;
 						brackets=False
 							
-					if l.startswith('+ '):
-						add=add+l.replace('+ ', '')
-						if l.replace('+ ', '') == "[" and b==0:
+					if not newpage:
+						if l.startswith('+ '):
+							add=add+l.replace('+ ', '')
+							if l.replace('+ ', '') == "[" and b==0:
+								b=+1
+							if l.replace('+ ', '') == "[" and b==1:
+								b=0
+								brackets=True	
+
+						if l.startswith('- '):
+							rem=rem+l.replace('- ', '')
+					else:
+						add=add+l
+						if l=="[" and b==0:
 							b=+1
-						if l.replace('+ ', '') == "[" and b==1:
+						if l=="[" and b==1:
 							b=0
-							brackets=True	
-					
-					if l.startswith('- '):
-						rem=rem+l.replace('- ', '')
+							brackets=True
 
 				print(str(us['name'])) 
 				print(add)

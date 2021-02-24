@@ -18,18 +18,10 @@ PARAMS3 ={
 	"rcnamespace": "0|2",
 	"rcprop": "title|user|userid|timestamp",
 	"rctype": "edit|new",
+	"rcdir": "older",
+	"rclimit": 1,
 	"rctoponly": 1	
 }
-
-try:
-	PARAMS3["rcstart"]=str(config_object["DATA"]["timestamp"])
-	lasttimestamp=str(config_object["DATA"]["timestamp"])
-	PARAMS3["rclimit"]="max"
-	PARAMS3["rcdir"]="newer"
-except (KeyError, NameError) as error:
-	lasttimestamp=0
-	PARAMS3["rclimit"]=1
-	PARAMS3["rcdir"]="older"
 
 R = S.get(url=URL, params=PARAMS3)
 DATA3 = R.json()
@@ -45,21 +37,14 @@ for rc in RECENTCHANGES:
 	}
 	R = S.get(url=URL, params=PARAMS4)
 	DATA4 = R.json()
-	print(DATA4)
-	USERS=DATA4['query']['users']
-for us in USERS:
-	print(us)
-	try:
-		edcount=us['editcount']
-	except KeyError: #Anonym users
-		edcount=0
-	if edcount < 100 and rc['timestamp']!=lasttimestamp:
-		print(str(us['name'])) 
-		lasttimestamp=rc['timestamp']
-		config_object["DATA"]={
-			"timestamp": lasttimestamp
-		}
-		with open('config.conf', 'w') as conf:
-			config_object.write(conf)
+	if DATA4['batchcomplete']=="":
+		print("Salvataggio terminato. Fine esecuzione.")
 	else:
-		print("NO - "+str(us['name'])) 
+		print(DATA4)
+		print("Errore nel salvataggio.")
+	lasttimestamp=rc['timestamp']
+	config_object["DATA"]={
+		"timestamp": lasttimestamp
+	}
+	with open('config.conf', 'w') as conf:
+		config_object.write(conf)

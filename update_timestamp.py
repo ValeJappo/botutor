@@ -4,9 +4,9 @@ from configparser import ConfigParser
 
 config_object = ConfigParser()
 config_object.read("config.conf")
-
+info = config_object["INFO"]
 S = requests.Session()
-URL = "https://test.wikipedia.org/w/api.php"
+URL = "https://"+str(info["site"])+".wikipedia.org/w/api.php"
 
 #Analyze recent changes
 
@@ -15,7 +15,6 @@ PARAMS3 ={
 	"format": "json",
 	"list": "recentchanges",
 	"continue": "-||",
-	"rcnamespace": "0|2",
 	"rcprop": "title|user|userid|timestamp",
 	"rctype": "edit|new",
 	"rcdir": "older",
@@ -38,10 +37,10 @@ for rc in RECENTCHANGES:
 	R = S.get(url=URL, params=PARAMS4)
 	DATA4 = R.json()
 	if DATA4['batchcomplete']=="":
-		print("Salvataggio terminato. Fine esecuzione.")
+		print("Data saved. Stop execution.")
 	else:
 		print(DATA4)
-		print("Errore nel salvataggio.")
+		print("Error while saving.")
 	lasttimestamp=rc['timestamp']
 	config_object["DATA"]={
 		"timestamp": lasttimestamp

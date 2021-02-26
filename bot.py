@@ -3,14 +3,15 @@ import os
 import difflib
 from configparser import ConfigParser
 
-S = requests.Session()
-URL = "https://test.wikipedia.org/w/api.php"
 i=0
 config_object = ConfigParser()
 config_object.read("config.conf")
-#userinfo = config_object["INFO"]
-#username=str(userinfo["username"])
-#password=str(userinfo["password"])
+info = config_object["INFO"]
+#username=str(info["username"])
+#password=str(info["password"])
+
+S = requests.Session()
+URL = "https://"+str(info["site"])+".wikipedia.org/w/api.php"
 
 def disambigua(links, user):
 	for link in links:
@@ -29,14 +30,74 @@ def disambigua(links, user):
 				print("DISAMBIGUA")
 		except KeyError:#Page do not exist
 			pass			
+	
+def linkfile(add, user):
+	if add.find("upload.wikimedia.org") >= 0:
+		print("LINKFILE")
+
+def linkcat(links, user):
+	for link in links:
+		if link.find(":") < 0:
+			print("LINKCAT")
+
+def citaweb(add, user):
+	if add.find("<ref>[http") >= 0 or add.find("<ref>http") >= 0:
+		print("CITAWEB")	
+
+def wrongref(add, user):
+	if add.find("[1]") >=0 and add.find("[2]") >= 0 and add.find("[[1]]") < 0 and add.find("[[2]]") < 0:
+		print("WRONGREF")
+
+def sectionlink(add, user):
+	if add.replace(" ", "").find("==[[") >=0 and add.replace(" ", "").find("]]==") >=0:
+		print("SECTIONLINK")
+
+def sezionistandard(add, user):
+	sections=[]
+	if (add.replace(" ", "").lower().find("==note==")) > 0:
+		sections.append(add.replace(" ", "").lower().find("==note=="))
+	if (add.replace(" ", "").lower().find("==bibliografia==")) > 0:
+		sections.append(add.replace(" ", "").lower().find("==bibliografia=="))
+	if (add.replace(" ", "").lower().find("==vocicorrelate==")) > 0:
+		sections.append(add.replace(" ", "").lower().find("==vocicorrelate=="))
+	if (add.replace(" ", "").lower().find("==altriprogetti==")) > 0:
+		sections.append(add.replace(" ", "").lower().find("==altriprogetti=="))
+	if (add.replace(" ", "").lower().find("==collegamentiesterni==")) > 0:
+		sections.append(add.replace(" ", "").lower().find("==collegamentiesterni=="))
+
+	i=0
+	for section in sections:
+		if i==0:
+			i=i+1
+		elif section < sections[i]:
+			print("SEZIONISTANDARD")
+			i=i+1
+
+def tradottoda(title, user):
+	try:
+		PARAMS={
+			"action": "query",
+			"format": "json",
+			"prop": "templates",
+			"titles": title,
+			"formatversion": "latest",
+			"tltemplates": "Template:Tradotto da"
+		}
+		R = S.get(url=URL, params=PARAMS)
+		DATA = R.json()
+		if DATA['query']['pages'][0]['templates'][0]['title']=="Template:Disambigua":
+			print("TRADOTTODA")
+	except KeyError:#Page do not exist
+		print("TRADOTTODA")
+
+def traduzioneerrata(add, user):
+	if (add.replace(" ", "").lower().find("==riferimenti==")) > 0:
+		print("TRADUZIONEERRATA")
 
 def messaggio(utente, testo):
 	#controllare benvenuto
 	#api edit
 	print('msg')
-		
-def placeholder(ns):
-	print("Namespace "+str(ns))
 
 """
 # Token login
@@ -91,12 +152,11 @@ PARAMS3 ={
 	"format": "json",
 	"list": "recentchanges",
 	"continue": "-||",
-	"rcprop": "title|user|userid|timestamp|flags|ids", #patrolled <- serve patrol/patrolmarks
+	"rcprop": "title|user|userid|timestamp|flags|tags|ids",
 	"rctype": "edit|new",
 	"rclimit": "max",
 	"rcdir" : "newer",
-	"rcnamespace": "0|1|2|3|6|14", #todo: +6, 14 (file, cat) per verifiche.
-	"rctoponly": 1	
+	"rcnamespace": "0|1|2|3|6|14"
 }
 
 try:
@@ -128,7 +188,16 @@ for rc in RECENTCHANGES:
 			edcount=us['editcount']
 		except KeyError: #Anonym users
 			edcount=0
-		if  edcount < 100 and rc['timestamp']!=lasttimestamp: #todo: verifica che non sia verificato rc["patrolled"]=="" / "unpatrolled (serve patrol/patrolmark); #filtra namespace da ids
+
+		try:
+			isbot=rc['bot']==""
+		except KeyError:
+			isbot=False
+
+		if rc['user']=="ValeJappo":	#DEBUG <-- todo: rimuovere
+			edcount=0				#DEBUG
+
+		if edcount < 100 and rc['timestamp']!=lasttimestamp and not "mw-reverted" in rc["tags"] and not "mw-undo" in rc["tags"] and not "mw-manual-revert" in rc["tags"] and not isbot:
 			PARAMS5={
 				"action": "query",
 				"format": "json",
@@ -140,11 +209,16 @@ for rc in RECENTCHANGES:
 			}
 			R = S.get(url=URL, params=PARAMS5)
 			DATA5 = R.json()
+			#input("Premi un tasto per continuare")#DEBUG-SLOW MODE
 			try:
 				score=float(DATA5['query']['pages'][0]['revisions'][1]['oresscores']['goodfaith']['true'])
 			except IndexError: #New page
 				score=float(DATA5['query']['pages'][0]['revisions'][0]['oresscores']['goodfaith']['true'])
-			#score=1#DEBUG-SETTING SCORE AS 1
+			except:
+				print("Errore")
+
+			if rc['user']=="ValeJappo":	#DEBUG <-- todo: rimuovere
+				score=1					#DEBUG
 			if score >= 0.3:
 				c1=DATA5['query']['pages'][0]['revisions'][0]['slots']['main']['content']
 				try:
@@ -201,7 +275,7 @@ for rc in RECENTCHANGES:
 						add=add+l
 						if l.replace(" ", "").replace("+", "")=="[" and b==0 and not brackets:
 							b=+1
-						if b==1:
+						elif b==1:
 							b=0
 							if l.replace(" ", "").replace("+", "")=="[":
 								brackets=True
@@ -213,8 +287,26 @@ for rc in RECENTCHANGES:
 				print("COLLEGAMENTI:")
 				print(links)
 						
-				#controlli
-				disambigua(links, rc['user'])
+				#controlli <-----------------------------------------------------------
+				if rc["ns"]%2==0:
+					if rc["ns"]==0 or (rc["ns"]==3 and DATA5['query']['pages'][0]['title'].replace("User:", "").replace("Utente:", "") != rc['user']):
+						disambigua(links, rc['user'])
+						linkfile(add, rc['user'])
+						citaweb(add, rc['user'])
+						wrongref(add, rc['user'])
+						sectionlink(add, rc['user'])
+						if rc['ns']==14: #categoria
+							linkcat(links, rc['user'])
+						if newpage:
+							sezionistandard(add, rc['user'])
+							traduzioneerrata(add, rc['user'])
+							if "contenttranslation" in rc['tags']:
+								tradottoda(DATA5['query']['pages'][0]['title'], rc['user'])
+
+				else:#discussioni
+					if DATA5['query']['pages'][0]['title'].replace("User talk:", "").replace("Discussioni utente:", "") == rc['user']:
+						print("TALK")
+				#fine ----------------------------------------------------------------
 				
 				with open('config.conf', 'w') as conf:
 					config_object.write(conf)

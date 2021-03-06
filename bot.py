@@ -1,14 +1,17 @@
 import requests
 import os
 import difflib
+import json
+from tinydb import TinyDB, Query
 from configparser import ConfigParser
 
 i=0
+messages={}
 config_object = ConfigParser()
 config_object.read("config.conf")
 info = config_object["INFO"]
-#username=str(info["username"])
-#password=str(info["password"])
+username=str(info["username"])
+password=str(info["password"])
 
 S = requests.Session()
 URL = "https://"+str(info["site"])+".wikipedia.org/w/api.php"
@@ -27,34 +30,60 @@ def disambigua(links, user):
 			R = S.get(url=URL, params=PARAMS)
 			DATA = R.json()
 			if DATA['query']['pages'][0]['templates'][0]['title']=="Template:Disambigua":
-				print("DISAMBIGUA")
+				msg(user, "DISAMBIGUA")
 		except KeyError:#Page do not exist
 			pass			
 	
 def linkfile(add, user):
 	if add.find("upload.wikimedia.org") >= 0:
-		print("LINKFILE")
+		msg(user, "LINKFILE")
 
 def linkcat(links, user):
 	for link in links:
 		if link.find(":") < 0:
-			print("LINKCAT")
+			msg(user, "LINKCAT")
 
 def citaweb(add, user):
 	if add.find("<ref>[http") >= 0 or add.find("<ref>http") >= 0:
-		print("CITAWEB")	
+		msg(user, "CITAWEB")	
 
 def wrongref(add, user):
 	if add.find("[1]") >=0 and add.find("[2]") >= 0 and add.find("[[1]]") < 0 and add.find("[[2]]") < 0:
-		print("WRONGREF")
+		msg(user, "WRONGREF")
 
 def sectionlink(add, user):
 	if add.replace(" ", "").find("==[[") >=0 and add.replace(" ", "").find("]]==") >=0:
-		print("SECTIONLINK")
+		msg(user, "SECTIONLINK")
+
+def sectionformat(add, user):
+	if add.replace(" ", "").find("==''") >=0 and add.replace(" ", "").find("''==") >=0:
+		msg(user, "SECTIONFORMAT")
 
 def sezionistandard(add, user):
 	sections=[]
 	if (add.replace(" ", "").lower().find("==note==")) > 0:
+		"""
+		s=0
+		si=0
+		section=False
+		for l in add:
+			if l=="=" and s==0 and not section:
+				s=1
+			if l=="=" and s==1 and not section:
+				s=0
+				section=True
+
+			if section and l!="=":
+				try 
+			if section and l=="=":
+				s=-1
+
+			if s==-1 and l=="=":
+				section=False
+				si=si+1
+			elif s==-1:
+				s=0
+		"""
 		sections.append(add.replace(" ", "").lower().find("==note=="))
 	if (add.replace(" ", "").lower().find("==bibliografia==")) > 0:
 		sections.append(add.replace(" ", "").lower().find("==bibliografia=="))
@@ -70,7 +99,7 @@ def sezionistandard(add, user):
 		if i==0:
 			i=i+1
 		elif section < sections[i]:
-			print("SEZIONISTANDARD")
+			msg(user, "SEZIONISTANDARD")
 			i=i+1
 
 def tradottoda(title, user):
@@ -86,65 +115,78 @@ def tradottoda(title, user):
 		R = S.get(url=URL, params=PARAMS)
 		DATA = R.json()
 		if DATA['query']['pages'][0]['templates'][0]['title']=="Template:Disambigua":
-			print("TRADOTTODA")
+			msg(user, "TRADOTTODA")
 	except KeyError:#Page do not exist
-		print("TRADOTTODA")
+		msg(user, "TRADOTTODA")
 
 def traduzioneerrata(add, user):
 	if (add.replace(" ", "").lower().find("==riferimenti==")) > 0:
-		print("TRADUZIONEERRATA")
+		msg(user, "TRADUZIONEERRATA")
 
-def messaggio(utente, testo):
-	#controllare benvenuto
-	#api edit
-	print('msg')
+def msg(user, msgid):
+	db = TinyDB('users.json')
+	User = Query()
+	with open('messages.json') as f:
+		data = json.load(f)
+		text=data[msgid].encode("utf-8")
+	notwarned=True
+	try:
+		notwarned=not db.search(User.name == str(user))[0][str(msgid)]
+	except (IndexError, KeyError) as e:
+		notwarned=True
+	if notwarned:
+		print(msgid)
+		db.upsert({'name': str(user), str(msgid): True}, User.name == str(user))
+		try:
+			messages[user].append(text)
+		except KeyError:
+			messages[user]=[text]
 
-"""
-# Token login
-PARAMS0 = {
-	'action':"query",
-	'meta':"tokens",
-	'type':"login",
-	'format':"json"
-}
+def crsf_login():
+	# Token login
+	PARAMS0 = {
+		'action':"query",
+		'meta':"tokens",
+		'type':"login",
+		'format':"json"
+	}
 
-R = S.get(url=URL, params=PARAMS0)
-DATA0 = R.json()
+	R = S.get(url=URL, params=PARAMS0)
+	DATA0 = R.json()
 
-LOGIN_TOKEN = DATA0['query']['tokens']['logintoken']
+	LOGIN_TOKEN = DATA0['query']['tokens']['logintoken']
 
-# Login
+	# Login
 
-PARAMS1 = {
-	'action': "clientlogin",
-	'username': username,
-	'password': password,
-	'loginreturnurl': 'http://127.0.0.1:5000/',
-	'logintoken': LOGIN_TOKEN,
-	'format': "json"
-}
+	PARAMS1 = {
+		'action': "clientlogin",
+		'username': username,
+		'password': password,
+		'loginreturnurl': 'http://127.0.0.1:5000/',
+		'logintoken': LOGIN_TOKEN,
+		'format': "json"
+	}
 
-R = S.post(URL, data=PARAMS1)
-DATA1 = R.json()
-if DATA1["clientlogin"]["status"]=="PASS":
-	print("Logged in as "+username)
-else:
-	print("Login error."+DATA1)
-	raise SystemExit
+	R = S.post(URL, data=PARAMS1)
+	DATA1 = R.json()
+	if DATA1["clientlogin"]["status"]=="PASS":
+		print("Logged in as "+username)
+	else:
+		print("Login error."+DATA1)
+		raise SystemExit
 
-#Token CSRF
-PARAMS2 = {
-	"action": "query",
-	"meta": "tokens",
-	"format": "json"
-}
+	#Token CSRF
+	PARAMS2 = {
+		"action": "query",
+		"meta": "tokens",
+		"format": "json"
+	}
 
-R = S.get(url=URL, params=PARAMS2)
-DATA2 = R.json()
+	R = S.get(url=URL, params=PARAMS2)
+	DATA2 = R.json()
 
-CSRF_TOKEN = DATA2['query']['tokens']['csrftoken']
+	return DATA2['query']['tokens']['csrftoken']
 
-"""
 #Analyze recent changes
 
 PARAMS3 ={
@@ -214,8 +256,9 @@ for rc in RECENTCHANGES:
 				score=float(DATA5['query']['pages'][0]['revisions'][1]['oresscores']['goodfaith']['true'])
 			except IndexError: #New page
 				score=float(DATA5['query']['pages'][0]['revisions'][0]['oresscores']['goodfaith']['true'])
-			except:
+			except: #page deleted
 				print("Errore")
+				break
 
 			if rc['user']=="ValeJappo":	#DEBUG <-- todo: rimuovere
 				score=1					#DEBUG
@@ -289,7 +332,7 @@ for rc in RECENTCHANGES:
 						
 				#controlli <-----------------------------------------------------------
 				if rc["ns"]%2==0:
-					if rc["ns"]==0 or (rc["ns"]==3 and DATA5['query']['pages'][0]['title'].replace("User:", "").replace("Utente:", "") != rc['user']):
+					if not (rc["ns"]==3 and DATA5['query']['pages'][0]['title'].replace("User:", "").replace("Utente:", "") == rc['user']):
 						disambigua(links, rc['user'])
 						linkfile(add, rc['user'])
 						citaweb(add, rc['user'])
@@ -308,11 +351,29 @@ for rc in RECENTCHANGES:
 						print("TALK")
 				#fine ----------------------------------------------------------------
 				
-				with open('config.conf', 'w') as conf:
-					config_object.write(conf)
 			else:
 				print("NO - "+str(us['name']))
 		else:
 			print("NO - "+str(us['name']))
 		print("-"*10)
+#aggiungi messaggi
+for user in messages:
+	txt="\n\n== Aiuto ==\n\nCiao {{subst:ROOTPAGENAME}}, ti scrivo in quanto ho notato che hai effettuato degli errori comuni ai nuovi utenti, permettimi di spiegarti il problema nei dettagli!"
+	
+	#todo: controlla benvenuto; api edit
+
+	for text in messages[user]:
+		txt=txt+"\n\n"+text
+
+	#Edit
+	if user=="ValeJappo":#DEBUG <--- todo: rimuovere
+		PARAMS_EDIT = {
+			"action": "edit",
+			"title": "User talk:"+user,
+			"token": crsf_login(),
+			"format": "json",
+			"appendtext": txt+"\n\n--~~~~"
+		}
+		R = S.post(URL, data=PARAMS_EDIT)
+
 os.system("python3 update_timestamp.py")

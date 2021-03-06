@@ -128,7 +128,7 @@ def msg(user, msgid):
 	User = Query()
 	with open('messages.json') as f:
 		data = json.load(f)
-		text=data[msgid].encode("utf-8")
+		text=data[msgid]
 	notwarned=True
 	try:
 		notwarned=not db.search(User.name == str(user))[0][str(msgid)]

@@ -1,0 +1,25 @@
+<!doctype html>
+<head>
+    {% if not user %}
+    <meta http-equiv="refresh" content="0; URL='/login'" />    
+    {% endif %}
+    <title>Ultime modifiche - Tutor</title>
+    <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='styles/home.css') }}">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+</head>
+
+<body>
+    <div class="header">
+        <h1>Ultime modifiche</h1>
+        {% if user %}
+            <p>{{user}} (<a href="logout">logout</a>)</p>
+        {% else %}
+            <p><a href="login">login</a></p>
+        {% endif %}
+    </div>
+    <dib class="content">
+        {% for post in feed.entries %}
+            <p>{{post.author}}</p>
+        {% endfor %}
+    </dib>
+</body>

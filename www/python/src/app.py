@@ -65,7 +65,7 @@ def test_query():
     token=json.loads(crsf)['query']['tokens']['csrftoken']
     data = mwoauth.request({
 			"action": "edit",
-			"title": "User:"+repr(mwoauth.get_current_user(True)).replace("'", "")"+/Sandbox",
+			"title": "User:"+repr(mwoauth.get_current_user(True)).replace("'", "")+"/Sandbox",
             "summary": "Test oauth",
 			"token": str(token),
 			"format": "json",

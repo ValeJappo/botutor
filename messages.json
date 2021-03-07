@@ -1,4 +1,12 @@
 {
-  "LINKFILE": "Nel tentativo di inserire un file multimediale all'interno di una voce, hai inserito un link <code>https://upload.mediawiki.org</code>: non è questa la procedura da applicare per fare ciò!\n\nPer inserire un file multimediale ...",
-  "CITAWEB": "Hai inserito una nota contenente un link, ottimo! Tuttavia, non hai seguito la giusta procedura: anzichè inserire direttamente un collegamento, è consigliato l'utilizzo del template {{tl|Cita web}}."
+    "DISAMBIGUA":"Hai inserito un collegamento ad una pagina di [[Aiuto:Disambigua|disambiguazione",
+    "LINKFILE": "Nel tentativo di inserire un file multimediale all'interno di una voce, hai inserito un link <code>https://upload.mediawiki.org</code>: non è questa la procedura da applicare per fare ciò!\n\nPer inserire un file multimediale ...",
+    "LINKCAT":"",
+    "CITAWEB": "Hai inserito una nota contenente un link, ottimo! Tuttavia, non hai seguito la giusta procedura: anzichè inserire direttamente un collegamento, è consigliato l'utilizzo del template {{tl|Cita web}}.",
+    "WRONGREF": "",
+    "SECTIONLINK":"",
+    "SECTIONFORMAT":"",
+    "SEZIONISTANDARD":"",
+    "TRADOTTODA":"",
+    "TRADUZIONEERRATA":""
 }

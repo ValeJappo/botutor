@@ -5,7 +5,7 @@
         <script src="{{ url_for('static', filename='node_modules/oojs/dist/oojs.min.js') }}"></script>
         <script src="{{ url_for('static', filename='node_modules/oojs-ui/dist/oojs-ui.min.js') }}"></script>
         <script src="{{ url_for('static', filename='node_modules/oojs-ui/dist/oojs-ui-wikimediaui.min.js') }}"></script>
-        <script>var lay=new OO.ui.FieldLayout( new OO.ui.Widget( {
+        <script>new OO.ui.FieldLayout( new OO.ui.Widget( {
             content: [
                 new OO.ui.PanelLayout( {
                     expanded: false,
@@ -22,7 +22,6 @@
             align: 'top',
             label: 'Outlined BookletLayout'
         } )
-        document.append(lay);
         </script>
     </head>
 

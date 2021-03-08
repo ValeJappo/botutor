@@ -90,7 +90,7 @@ def test_query():
 			"appendtext": "test"
 		})
     return data
-@app("/test")
+@app.route("/test")
 def test():
     return render_template('test.html')
 

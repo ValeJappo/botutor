@@ -10,6 +10,7 @@
 
 <body>
     <div class="header">
+        <h1>Segui utente</h1>
         {% if user %}
             <p>{{user}} (<a href="logout">logout</a>)</p>
         {% else %}
@@ -18,8 +19,7 @@
     </div>
     <dib class="content">
         {% if user %}
-            <p><a href="modifiche">Ultime modifiche</a></p>
-            <p><a href="segui">Segui</a></p>
+            <p><a href="https://it.wikipedia.org/wiki/User:{{target}}">{{target}}</a></p>
         {% else %}
             <p>Per procedere è necessario effettuare il login. <a href="login">Effettua il login</a>.</p>
         {% endif %}

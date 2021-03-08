@@ -6,6 +6,89 @@
     <title>Ultime modifiche - Tutor</title>
     <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='styles/home.css') }}">
     <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <link rel="stylesheet" href="https://www.mediawiki.org/w/load.php?modules=mediawiki.legacy.shared|mediawiki.diff.styles&only=styles">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script>
+        function checkOverflow(el)
+        {
+        var curOverflow = el.style.overflow;
+
+        if ( !curOverflow || curOverflow === "visible" )
+            el.style.overflow = "hidden";
+
+        var isOverflowing = el.clientWidth < el.scrollWidth 
+            || el.clientHeight < el.scrollHeight;
+
+        el.style.overflow = curOverflow;
+
+        return isOverflowing;
+        }
+
+        function diff(revid, oldrevid, object){
+            var url2 = "https://it.wikipedia.org/w/api.php"; 
+            if (oldrevid==0) //new page
+                alert("new");
+                //...
+
+            var params2 = {
+                "action": "compare",
+                "format": "json",
+                "fromrev": revid,
+                "torev": oldrevid,
+                "prop": "diff|ids|title",
+                "slots": "*"
+            };
+            url2 = url2 + "?origin=*";
+            Object.keys(params2).forEach(function(key){url2 += "&" + key + "=" + params2[key];});
+            fetch(url2)
+                .then(function(response){return response.json();})
+                .then(function(response) {
+                    var diff = response.compare.bodies.main;
+                    $(".diff-col").html(diff);
+                    $(".prev").html("");
+                });
+        }
+
+        var lrev="";
+        var url = "https://it.wikipedia.org/w/api.php"; 
+
+        var params = {
+            "action": "query",
+            "format": "json",
+            "list": "recentchanges",
+            "rcprop": "title|ids|user|userid|oresscores|comment",
+            "rcshow": "!bot",
+            "rclimit": "1",
+            "rctype": "edit|new",
+            "rctoponly": 1
+        };
+        url = url + "?origin=*";
+        Object.keys(params).forEach(function(key){url += "&" + key + "=" + params[key];});
+        setInterval(function() {
+            if (checkOverflow(document.getElementsByClassName("diff-col")[0])){
+                $(".prev").html(document.getElementsByClassName("diff-col")[0].innerHTML);
+                $(".diff-col").html("");
+            }
+            fetch(url)
+                .then(function(response){return response.json();})
+                .then(function(response) {
+                    var recentchanges = response.query.recentchanges;
+                    for (var rc in recentchanges) {
+                        var edit=recentchanges[rc];
+                        if (edit.oresscores.goodfaith==undefined)
+                            var ores=1;
+                        else
+                            var ores=edit.oresscores.goodfaith;
+
+                        if (lrev != edit.revid && ores >= 0.3){
+                            $(".content").prepend("<p onclick='diff("+edit.revid+", "+edit.old_revid+", this)'>"+edit.user+"</p>");
+                            lrev=edit.revid;
+                        }
+                    }
+                })
+                .catch(function(error){console.log(error);});
+        }, 1000);
+    </script>
 </head>
 
 <body>
@@ -17,9 +100,13 @@
             <p><a href="login">login</a></p>
         {% endif %}
     </div>
-    <dib class="content">
-        {% for post in feed.entries %}
-            <p>{{post.author}}</p>
-        {% endfor %}
-    </dib>
+    <div class="prev"></div>
+    <div class="row">
+        <div class="column">
+            <div class="content">
+            </div>
+        </div><div class="column">
+            <div class="diff-col"></div>
+        </div>
+    </div>
 </body>

@@ -6,10 +6,19 @@
     <title>Aula Tutor</title>
     <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='styles/home.css') }}">
     <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <script>
+
+        function segui(user){
+            if (user!="")
+                window.open("segui/"+user);
+        }
+
+    </script>
 </head>
 
 <body>
     <div class="header">
+            <h1>Segui utente</h1>
         {% if user %}
             <p>{{user}} (<a href="logout">logout</a>)</p>
         {% else %}
@@ -18,8 +27,16 @@
     </div>
     <dib class="content">
         {% if user %}
-            <p><a href="modifiche">Ultime modifiche</a></p>
-            <p><a href="segui">Segui</a></p>
+        <form>
+            <div>
+              <label for="uname">Scegli un utente: </label>
+              <input type="text" id="uname" name="name"
+                     placeholder="Nome utente">
+            </div>
+            <div>
+              <button onclick="segui(document.getElementById('uname').value)">Segui</button>
+            </div>
+          </form>
         {% else %}
             <p>Per procedere è necessario effettuare il login. <a href="login">Effettua il login</a>.</p>
         {% endif %}

@@ -54,6 +54,24 @@ def modifiche():
         user=repr(mwoauth.get_current_user(True)).replace("'", "")
     return render_template('modifiche.html', user=user, feed=feed)
 
+@app.route("/segui")
+def segui():
+    user=None
+    if repr(mwoauth.get_current_user(True))!="None":
+        user=repr(mwoauth.get_current_user(True)).replace("'", "")
+
+        return render_template('segui.html', user=user)
+
+@app.route("/segui/<target>")
+def seguitarget(target=None):
+    user=None
+    if repr(mwoauth.get_current_user(True))!="None":
+        user=repr(mwoauth.get_current_user(True)).replace("'", "")
+        
+
+        return render_template('segui-action.html', user=user, target=target)
+
+
 @app.route("/test_query")
 def test_query():
     username = mwoauth.get_current_user(True)
@@ -72,6 +90,9 @@ def test_query():
 			"appendtext": "test"
 		})
     return data
+@app("/test")
+def test():
+    return render_template('test.html')
 
 if __name__ == "__main__":
     app.run(debug=True, threaded=True)

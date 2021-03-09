@@ -74,7 +74,6 @@ def seguitarget(target=None):
 
 @app.route("/test_query")
 def test_query():
-    username = mwoauth.get_current_user(True)
     crsf=mwoauth.request({
 		"action": "query",
 		"meta": "tokens",
@@ -92,7 +91,11 @@ def test_query():
     return data
 @app.route("/test")
 def test():
-    return render_template('test.html')
+    user=None
+    if repr(mwoauth.get_current_user(True))!="None":
+        user=repr(mwoauth.get_current_user(True)).replace("'", "")
+        
+    return render_template('test.html', user="Testing-User")
 
 if __name__ == "__main__":
     app.run(debug=True, threaded=True)

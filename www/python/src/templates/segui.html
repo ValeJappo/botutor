@@ -1,44 +1,76 @@
 <!doctype html>
 <head>
-    {% if not user %}
-    <meta http-equiv="refresh" content="0; URL='/login'" />    
-    {% endif %}
-    <title>Aula Tutor</title>
-    <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='styles/home.css') }}">
-    <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
-    <script>
-
+    <script>  
         function segui(user){
             if (user!="")
                 window.open("segui/"+user);
         }
+        function rimuovi(user){
+            console.log("rimuovi "+user);
+        }
+        
+        var txtinput = new OO.ui.FieldsetLayout( {
+            label: null,
+            items: [
+                new OO.ui.FieldLayout( new OO.ui.TextInputWidget({
+                    icon: 'userAvatarOutline'
+                }), {
+                    align: 'top',
+                    label: 'Scegli un utente'
+                } ),
+                new OO.ui.FieldLayout( new OO.ui.Widget( {
+                    content: [
+                        new OO.ui.HorizontalLayout( {
+                            items: [
+                                new OO.ui.ButtonInputWidget( {
+                                    type: 'submit',
+                                    name: 'segui',
+                                    label: 'Segui',
+                                    flags: [
+                                        'primary',
+                                        'progressive'
+                                    ],
+                                    icon: 'userAdd',
+                                    classes: ['segui-add']
+                                } ),
+                                new OO.ui.ButtonWidget( {
+                                    framed: false,
+                                    flags: [
+                                        'destructive'
+                                    ],
+                                    label: 'Smetti di seguire',
+                                    classes: [
+                                        'segui-remove'
+                                    ]
+                                } )
+                            ]
+                        } )
+                    ]
+                } ), {
+                    align: 'top',
+                    label: null
+                } )
+            ]
+        } );
+
+        $( document ).ready(function() {
+            $(".content-segui").append(txtinput.$element);
+        });
+
+
+        txtinput.items[1].$element.find('.segui-add').on("click", function(){segui(txtinput.$element.find("input").val())});
+        txtinput.items[1].$element.find('.segui-remove').on("click", function(){rimuovi(txtinput.$element.find("input").val())});
 
     </script>
 </head>
 
 <body>
-    <div class="header">
-            <h1>Segui utente</h1>
-        {% if user %}
-            <p>{{user}} (<a href="logout">logout</a>)</p>
-        {% else %}
-            <p><a href="login">login</a></p>
-        {% endif %}
-    </div>
-    <dib class="content">
-        {% if user %}
-        <form>
-            <div>
-              <label for="uname">Scegli un utente: </label>
-              <input type="text" id="uname" name="name"
-                     placeholder="Nome utente">
-            </div>
-            <div>
-              <button onclick="segui(document.getElementById('uname').value)">Segui</button>
-            </div>
-          </form>
-        {% else %}
-            <p>Per procedere è necessario effettuare il login. <a href="login">Effettua il login</a>.</p>
-        {% endif %}
-    </dib>
+    
+
+    {% if user %}
+        <div class="content-segui"></div>
+    {% else %}
+        <p>Per procedere è necessario effettuare il login. <a href="login">Effettua il login</a>.</p>
+    {% endif %}
+
 </body>

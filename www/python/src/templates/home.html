@@ -1,27 +1,157 @@
+
 <!doctype html>
 <head>
     {% if not user %}
-    <meta http-equiv="refresh" content="0; URL='/login'" />    
+        <meta http-equiv="refresh" content="0; URL='/login'" />
     {% endif %}
-    <title>Aula Tutor</title>
     <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='styles/home.css') }}">
-    <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='node_modules/oojs-ui/dist/oojs-ui-wikimediaui.min.css') }}">
+    <script src="{{ url_for('static', filename='node_modules/jquery/dist/jquery.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='node_modules/oojs/dist/oojs.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='node_modules/oojs-ui/dist/oojs-ui.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='node_modules/oojs-ui/dist/oojs-ui-wikimediaui.min.js') }}"></script>
+    {% if user %}
+    <script>
+    function PageOneLayout( name, config ) {
+        PageOneLayout.super.call( this, name, config );
+        this.$element.append( '<p>Pagina principale.</p>' );
+    }
+    OO.inheritClass( PageOneLayout, OO.ui.PageLayout );
+    PageOneLayout.prototype.setupOutlineItem = function () {
+        this.outlineItem.setLabel( 'Pagina principale' );
+    };
+
+    function PageTwoLayout( name, config ) {
+        PageTwoLayout.super.call( this, name, config );
+        this.$element.attr("id", "p-segui");
+    }
+    OO.inheritClass( PageTwoLayout, OO.ui.PageLayout );
+    PageTwoLayout.prototype.setupOutlineItem = function () {
+        this.outlineItem.setLabel( 'Segui un utente' );
+    };
+
+    function PageThreeLayout( name, config ) {
+        PageThreeLayout.super.call( this, name, config );
+        this.$element.attr("id", "p-modifiche");
+    }
+    OO.inheritClass( PageThreeLayout, OO.ui.PageLayout );
+    PageThreeLayout.prototype.setupOutlineItem = function () {
+        this.outlineItem.setLabel( 'Ultime modifiche' );
+    };
+
+    var page1 = new PageOneLayout( 'one' ),
+        page2 = new PageTwoLayout( 'two' ),
+        page3 = new PageThreeLayout ('three');
+
+    var booklet = new OO.ui.BookletLayout( {
+        outlined: true
+    } );
+
+    booklet.addPages( [ page1, page2, page3 ] );
+    booklet.$element.css("margin-top", "3em");
+    $( document ).ready(function() {
+        $( "#page" ).append( booklet.$element );
+        $("#p-segui").append($("#segui"));
+        $("#segui").attr("style", "");
+        $("#p-modifiche").append($("#modifiche"));
+        $("#modifiche").attr("style", "");
+    });
+
+    var menu = new OO.ui.ButtonMenuSelectWidget( {
+        icon: 'settings',
+        label: 'Impostazioni',
+        invisibleLabel: true,
+        framed: false,
+        title: 'Impostazioni',
+        menu: {
+            items: [
+                new OO.ui.MenuOptionWidget( {
+                    data: 'a',
+                    label: 'First'
+                } ),
+                new OO.ui.MenuOptionWidget( {
+                    data: 'b',
+                    label: 'Second',
+                    indicator: 'clear'
+                } ),
+                new OO.ui.MenuOptionWidget( {
+                    data: 'c',
+                    label: 'Third'
+                } ),
+                new OO.ui.MenuOptionWidget( {
+                    data: 'c',
+                    label: 'The fourth option has an overly long label'
+                } ),
+                new OO.ui.MenuOptionWidget( {
+                    icon: 'feedback',
+                    data: 'd',
+                    label: 'The fifth option has an icon'
+                } )
+            ]
+        }
+    } );
+    var wiki = new OO.ui.ToggleButtonWidget( {
+        icon: 'logoWikipedia',
+        title: 'torna su Wikipedia',
+        label: 'torna su Wikipedia',
+        invisibleLabel: true,
+        framed: false,
+        value: false
+    } );
+    wiki.on( "click", function() {window.open("https://it.wikipedia.org");wiki.setValue(false);});
+
+    var notifications =  new OO.ui.ToggleButtonWidget( {
+        icon: 'bell',
+        title: 'Notifiche',
+        label: 'Notifiche',
+        invisibleLabel: true,
+        framed: false,
+        value: false
+    } );
+
+    var logout = new OO.ui.ToggleButtonWidget( {
+        icon: 'logOut',
+        title: 'log-out',
+        label: 'Log-out',
+        invisibleLabel: true,
+        framed: false,
+        value: false
+    } );
+
+    $( document ).ready(function() {
+        var arr = [notifications, menu, logout, wiki];
+        arr.forEach(function(item, index){
+            item.$element.prependTo($(".header"));
+            item.$element.attr("id", "menu-icon");
+        });
+    });
+</script>
+{% endif %}
 </head>
 
 <body>
     <div class="header">
+        <h1>Pannello di tutoraggio</h1>
         {% if user %}
             <p>{{user}} (<a href="logout">logout</a>)</p>
         {% else %}
             <p><a href="login">login</a></p>
         {% endif %}
     </div>
-    <dib class="content">
-        {% if user %}
-            <p><a href="modifiche">Ultime modifiche</a></p>
-            <p><a href="segui">Segui</a></p>
-        {% else %}
-            <p>Per procedere è necessario effettuare il login. <a href="login">Effettua il login</a>.</p>
-        {% endif %}
-    </dib>
+    {% if user %}
+        <div id="page"></div>
+        <div id="segui" style="display:none">{% include 'segui.html' %}</div>
+        <div id="modifiche" style="display:none">{% include 'modifiche.html' %}</div>
+    {% else %}
+        <script>
+        var msgalert = new OO.ui.MessageWidget( {
+            type: 'warning',
+            label: 'Per proseguire devi effettuare il login con il tuo account Mediawiki. Stai venendo automaticamente reindirizzato/a.\n\nSe nulla succede, premi il pulsante "login" - in alto a destra!'
+        } );
+
+        $( document ).ready(function() {
+            $(".header").after(msgalert.$element);
+        });
+        </script> 
+    {% endif %}
 </body>

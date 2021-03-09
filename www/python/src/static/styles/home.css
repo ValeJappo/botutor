@@ -21,9 +21,15 @@ a:link {
     margin-top:0;
     padding-top:1em;
     margin-right: 5%;
-    margin-left: 5%;
+    margin-left: 0.01em;
     float: right;
     display:inline;
+}
+
+#menu-icon{
+    float: right;
+    display:block;
+    margin-block-start: .5em;
 }
 
 .header h1{
@@ -71,4 +77,9 @@ table {
 td{
     width: 25%;
     max-height:100vh;
+}
+
+.oo-ui-messageWidget{
+    margin-top: .05em;
+    margin-bottom: 1em;
 }

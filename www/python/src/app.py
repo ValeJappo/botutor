@@ -5,6 +5,7 @@ from flask import render_template
 from flask_mwoauth import MWOAuth
 from configparser import ConfigParser
 import feedparser
+from tinydb import TinyDB, Query
 from flask import Markup
 
 
@@ -36,7 +37,7 @@ config_object = ConfigParser()
 config_object.read("keys.conf")
 keys = config_object["KEYS"]
 print(keys["consumer_key"])
-mwoauth = MWOAuth(base_url='https://it.wikipedia.org/w',clean_url='https://it.wikipedia.org/wiki',consumer_key=keys["consumer_key"],consumer_secret=keys["consumer_secret"])   
+mwoauth = MWOAuth(base_url='https://test.wikipedia.org/w',clean_url='https://test.wikipedia.org/wiki',consumer_key=keys["consumer_key"],consumer_secret=keys["consumer_secret"])   
 app.register_blueprint(mwoauth.bp)
 
 
@@ -95,7 +96,49 @@ def test():
     if repr(mwoauth.get_current_user(True))!="None":
         user=repr(mwoauth.get_current_user(True)).replace("'", "")
         
-    return render_template('test.html', user="Testing-User")
+    return render_template('home.html', user="Testing-User")
 
+@app.route("/data/<file>")
+def data(file=None):
+    if(file.find(".json") and repr(mwoauth.get_current_user(True))!="None"):
+        try:
+            return render_template(file)
+        except:
+            return "{'error': 'invalid request.'}"
+    else:
+        return "{'error': 'invalid request.'}"
+
+
+@app.route("/action/segui/<user>/<tag>")
+def segui_route(user, tag):
+    if(repr(mwoauth.get_current_user(True))!="None" or True):
+        db = TinyDB('segui.json')
+        User = Query()
+        try:
+            u_tag=db.search(Query()['name'] == user)[0][tag]
+        except (IndexError, KeyError) as e:
+            u_tag=[]
+        if tag != "rimuovi":
+            if not repr(mwoauth.get_current_user(True)) in u_tag:
+                u_tag.append(repr(mwoauth.get_current_user(True)))
+                db.upsert({'name': user, tag: u_tag}, User.name == user)
+                return '{"status": "success"}'
+            else:
+                return '{"status": "duplicate"}'
+        else:
+            for item in db.search(Query()['name'] == user)[0]:
+                try:
+                    try:
+                        db.search(Query()['name'] == user)[0][item].remove(repr(mwoauth.get_current_user(True)))
+                        db.upsert({'name': user, item: u_tag}, User.name == user)
+                    except AttributeError:
+                        pass
+                except ValueError:
+                    pass
+            return '{"status": "success"}'
+        return '{"status": "error"}'
+    else:
+        return '{"status": "login"}'
+        
 if __name__ == "__main__":
     app.run(debug=True, threaded=True)

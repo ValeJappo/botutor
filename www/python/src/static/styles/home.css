@@ -29,7 +29,14 @@ a:link {
 #menu-icon{
     float: right;
     display:block;
-    margin-block-start: .5em;
+    margin-block-start: .45em;
+}
+
+#menu-icon-left{
+    float: left;
+    display:block;
+    margin-block-start: .45em;
+    margin-left: .5em;
 }
 
 .header h1{

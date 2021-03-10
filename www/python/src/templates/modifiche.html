@@ -75,7 +75,15 @@
                             var ores=edit.oresscores.goodfaith;
 
                         if (lrev != edit.revid && ores >= 0.3){
-                            $(".content-modifiche").prepend("<p onclick='diff("+edit.revid+", "+edit.old_revid+", this)'>"+edit.user+"</p>");
+                            var obj=new OO.ui.ButtonWidget( {
+                                framed: false,
+                                indicator: 'down',
+                                label: edit.user
+                            } )
+                            obj.on("click", function(){diff(edit.revid, edit.old_revid, this.$element)});
+                            $(".content-modifiche").attr("style", "display:block");
+                            $(".content-modifiche").prepend(obj.$element);
+                            obj.$label.append("<p> - Nome Pagina</p>")
                             lrev=edit.revid;
                         }
                     }

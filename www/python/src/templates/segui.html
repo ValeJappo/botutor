@@ -1,23 +1,193 @@
 <!doctype html>
 <head>
     <script>  
-        function segui(user){
-            if (user!="")
-                window.open("segui/"+user);
+
+        var isMsgOn=false;
+        var msg_el;
+        function toggle_alert(type, msg){
+            if(!isMsgOn){
+                msg_el=new OO.ui.MessageWidget( {
+                    type: type,
+                    label: msg
+                } );
+                isMsgOn=true;
+                close_btn=new OO.ui.ButtonWidget( {
+                    icon: 'close',
+                    label: 'Nascondi',
+                    invisibleLabel: true,
+                    framed: false,
+                    title: 'Nascondi messaggio'
+                } );
+                close_btn.on("click", function(){msg_el.$element.remove(); isMsgOn=false;});
+                close_btn.$element.attr("style", "position:relative; top:-.35em; float:right");
+                msg_el.$icon.after(close_btn.$element);
+                $( document ).ready(function() {
+                    $(".content-segui").prepend(msg_el.$element);
+                });
+            }else{
+                msg_el.setType(type);
+                msg_el.setLabel(msg);
+            }
+        }
+
+        function segui(user, options){
+            if (user!=""){
+                options.forEach(function(item){
+                    fetch("/action/segui/"+user+"/"+item)
+                    .then(function(response){return response.json();})
+                    .then(function(response) {
+                        console.log(response)
+                        if(response.status=='success')
+                            toggle_alert("success", user+" aggiunto agli utenti osservati");
+                        else
+                            toggle_alert("error", "Errore nell'aggiungere "+user+" agli utenti osservati");
+                    });
+                });
+            }
         }
         function rimuovi(user){
-            console.log("rimuovi "+user);
+            if (user!=""){
+                fetch("/action/segui/"+user+"/rimuovi")
+                    .then(function(response){return response.json();})
+                    .then(function(response) {
+                        console.log(response)
+                        if(response.status=='success')
+                            toggle_alert("success", user+" rimosso dagli utenti osservati");
+                        else
+                            toggle_alert("error", "Errore nel rimuovere "+user+" dagli utenti osservati");
+                    });
+            }
         }
+        var multiselect=new OO.ui.MenuTagMultiselectWidget( {
+            selected: [
+                {
+                    data: 'all',
+                    label: '(tutte le modifiche)'
+                }
+                ],
+            options: [
+                {
+                    data: 'all',
+                    label: '(tutte le modifiche)'
+                },
+                {
+                    data: 'talk',
+                    label: 'Modifiche alle pagine di discussione'
+                },
+                {
+                    data: 'ns0',
+                    label: 'Modifiche al namespace principale'
+                },
+                {
+                    data: 'sandbox',
+                    label: 'Modifiche alla sandbox'
+                },
+                {
+                    data: 'ping',
+                    label: 'Modifiche nella sua pagina di discussione senza template Ping'
+                },
+            ],
+            classes: ['segui-tags']
+        } );
+        var save_loop=false;
+        multiselect.on("change", function(items){
+            if(items[items.length-1]!=undefined){
+                if((items[items.length-1].data=="all" && items.length>1)){
+
+                    multiselect.getMenu().items.forEach(function(i){
+                        multiselect.getMenu().unselectItem(i);
+                    });
+                    multiselect.setValue(["all"]);
+
+                }else if((multiselect.findItemFromData("all")!=null && items.length !=1)){
+                    multiselect.removeTagByData("all");
+                    save_loop=true;
+                }
+            }
+        });
         
+        //Partially based on https://gerrit.wikimedia.org/g/oojs/ui/+/master/demos/classes/NumberLookupTextInputWidget.js
+        UserLookupTextInputWidget = function DemoNumberLookupTextInputWidget( config ) {
+            // Parent constructor
+            OO.ui.TextInputWidget.call( this, $.extend( { validate: 'string'}, config ) );
+            // Mixin constructors
+            OO.ui.mixin.LookupElement.call( this, config );
+        };
+        OO.inheritClass( UserLookupTextInputWidget, OO.ui.TextInputWidget );
+        OO.mixinClass( UserLookupTextInputWidget, OO.ui.mixin.LookupElement );
+
+        UserLookupTextInputWidget.prototype.getLookupRequest = function () {
+            var
+                value = this.getValue(),
+                deferred = $.Deferred(),
+                delay = 500 + Math.floor( Math.random() * 500 );
+            this.getValidity().then( function () {
+                // Resolve with API results
+                setTimeout( function () {
+                var url = "https://it.wikipedia.org/w/api.php"; 
+                var params = {
+                    "action": "query",
+                    "format": "json",
+                    "list": "allusers",
+                    "auprefix": value
+                };
+                url = url + "?origin=*";
+                Object.keys(params).forEach(function(key){url += "&" + key + "=" + params[key];});
+                fetch(url)
+                    .then(function(response){return response.json();})
+                    .then(function(response) {
+                        var list=[];
+                        response.query.allusers.forEach(function(user){
+                            list.push(user.name);
+                        });
+                        deferred.resolve(list);
+                    })
+                    .catch(function(error){console.log(error);});
+
+                }, delay );
+            }, function () {
+                // No results when the input contains invalid content
+                deferred.resolve( [] );
+            } );
+            return deferred.promise( { abort: function () {} } );
+        };
+
+         UserLookupTextInputWidget.prototype.getLookupCacheDataFromResponse = function ( response ) {
+            return response || [];
+        };
+
+         UserLookupTextInputWidget.prototype.getLookupMenuOptionsFromData = function ( data ) {
+            var
+                items = [],
+                i, number;
+            for ( i = 0; i < data.length; i++ ) {
+                number = String( data[ i ] );
+                items.push( new OO.ui.MenuOptionWidget( {
+                    data: number,
+                    label: number
+                } ) );
+            }
+            return items;
+        };
+
         var txtinput = new OO.ui.FieldsetLayout( {
             label: null,
             items: [
-                new OO.ui.FieldLayout( new OO.ui.TextInputWidget({
+                new OO.ui.FieldLayout( new UserLookupTextInputWidget({
                     icon: 'userAvatarOutline'
                 }), {
                     align: 'top',
                     label: 'Scegli un utente'
                 } ),
+                new OO.ui.FieldLayout( new OO.ui.Widget( {
+                    content: [
+                        multiselect
+                    ]
+                }),
+                {
+                    align: 'top',
+                    label: "Seleziona le modifiche per le quali vuoi ricevere una notifica"
+                }),
                 new OO.ui.FieldLayout( new OO.ui.Widget( {
                     content: [
                         new OO.ui.HorizontalLayout( {
@@ -58,8 +228,8 @@
         });
 
 
-        txtinput.items[1].$element.find('.segui-add').on("click", function(){segui(txtinput.$element.find("input").val())});
-        txtinput.items[1].$element.find('.segui-remove').on("click", function(){rimuovi(txtinput.$element.find("input").val())});
+        txtinput.items[2].$element.find('.segui-add').on("click", function(){segui(txtinput.$element.find("input").val(), multiselect.getValue())});
+        txtinput.items[2].$element.find('.segui-remove').on("click", function(){rimuovi(txtinput.$element.find("input").val())});
 
     </script>
 </head>

@@ -372,7 +372,7 @@ for user in messages:
 			"title": "User talk:"+user,
 			"token": crsf_login(),
 			"format": "json",
-			"appendtext": txt+"\n\n--[[User:BOTutor|<sup><small>BOT</small></sup>Tutor]] (<small>messaggio automatico: [[User talk:BOTutor|segnala un problema]] - [[Aiuto:Sportello informazioni|chiedi aiuto]]</small>)"
+			"appendtext": txt+"\n\n--[[User:BOTutor|<sup><small>BOT</small></sup>Tutor]] (<small>messaggio automatico: [[User talk:BOTutor|segnala un problema]] - [[Aiuto:Sportello informazioni|chiedi aiuto]]</small>)"#todo: firma da file
 		}
 		R = S.post(URL, data=PARAMS_EDIT)
 

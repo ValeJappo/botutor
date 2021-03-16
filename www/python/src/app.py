@@ -5,6 +5,7 @@ from flask import render_template
 from flask_mwoauth import MWOAuth
 from configparser import ConfigParser
 import feedparser
+import toolforge
 from tinydb import TinyDB, Query
 from flask import Markup
 
@@ -40,6 +41,9 @@ print(keys["consumer_key"])
 mwoauth = MWOAuth(base_url='https://test.wikipedia.org/w',clean_url='https://test.wikipedia.org/wiki',consumer_key=keys["consumer_key"],consumer_secret=keys["consumer_secret"])   
 app.register_blueprint(mwoauth.bp)
 
+@app.route("/git-pull.php")
+def pull():
+    return("<?php if(isset($_SERVER['HTTP_X_GITHUB_EVENT'])) { `git -C ../www/static pull`; } ?>")
 
 @app.route("/")
 def index():
@@ -100,7 +104,7 @@ def test():
 
 @app.route("/data/<file>")
 def data(file=None):
-    if(file.find(".json") and repr(mwoauth.get_current_user(True))!="None"):
+    if(file.find(".json") and repr(mwoauth.get_current_user(True)).replace("'", "")!="None"):
         try:
             return render_template(file)
         except:
@@ -109,9 +113,10 @@ def data(file=None):
         return "{'error': 'invalid request.'}"
 
 
-@app.route("/action/segui/<user>/<tag>")
-def segui_route(user, tag):
-    if(repr(mwoauth.get_current_user(True))!="None" or True):
+@app.route("/action/segui/<string:user>/<string:tag>")
+def segui_route(user=None, tag=None):
+    oauth_user=str(repr(mwoauth.get_current_user(True))).replace("'", "")
+    if(oauth_user!="None" or True):
         db = TinyDB('segui.json')
         User = Query()
         try:
@@ -119,9 +124,9 @@ def segui_route(user, tag):
         except (IndexError, KeyError) as e:
             u_tag=[]
         if tag != "rimuovi":
-            if not repr(mwoauth.get_current_user(True)) in u_tag:
-                u_tag.append(repr(mwoauth.get_current_user(True)))
-                db.upsert({'name': user, tag: u_tag}, User.name == user)
+            if not oauth_user in u_tag:
+                u_tag.append(oauth_user)
+                db.upsert({'name': str(user), str(tag): u_tag}, User.name == user)
                 return '{"status": "success"}'
             else:
                 return '{"status": "duplicate"}'
@@ -129,7 +134,7 @@ def segui_route(user, tag):
             for item in db.search(Query()['name'] == user)[0]:
                 try:
                     try:
-                        db.search(Query()['name'] == user)[0][item].remove(repr(mwoauth.get_current_user(True)))
+                        db.search(Query()['name'] == user)[0][item].remove(oauth_user)
                         db.upsert({'name': user, item: u_tag}, User.name == user)
                     except AttributeError:
                         pass

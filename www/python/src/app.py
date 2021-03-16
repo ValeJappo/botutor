@@ -1,4 +1,5 @@
 import json
+import subprocess
 import os
 from flask import Flask
 from flask import render_template
@@ -47,6 +48,11 @@ def index():
     if repr(mwoauth.get_current_user(True))!="None":
         user=repr(mwoauth.get_current_user(True)).replace("'", "")
     return render_template('home.html', user=user)
+
+@app.route("/git-pull.php")
+def pull():
+	subprocess.call("php  static/git-pull.php")
+	return("")
 
 @app.route("/modifiche")
 def modifiche():

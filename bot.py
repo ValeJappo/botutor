@@ -376,4 +376,4 @@ for user in messages:
 		}
 		R = S.post(URL, data=PARAMS_EDIT)
 
-os.system("python3 update_timestamp.py")
+os.system("python1 update_timestamp.py")

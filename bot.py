@@ -130,7 +130,7 @@ def traduzioneerrata(add, user):
 	if (add.replace(" ", "").lower().find("==riferimenti==")) > 0:
 		msg(user, "TRADUZIONEERRATA")
 
-#Send message
+#Send message function
 def msg(user, msgid):
 	#read json
 	db = TinyDB('users.json')
@@ -299,6 +299,19 @@ for rc in RECENTCHANGES:
 				diff=c1
 				newpage=True
 
+			"""
+			Diffs' format:
+
+			Added character			+ c		(+_c)
+			Removed character		- c		(-_c)
+			Unchanged character		  c		(__c)
+
+
+			New pages' format:
+
+			Character				c		 (c)
+			"""
+
 			#Define variables
 			add=""
 			rem=""
@@ -311,11 +324,11 @@ for rc in RECENTCHANGES:
 			for l in diff: #For each character
 				#Record link
 				if brackets and l.replace('+ ', '').replace('  ', '') != "]" and l.replace('+ ', '').replace(' ', '') != "|" and not l.startswith('- '):
-					if len(l)>1:
-						l=l[2:]
-					try:
+					if len(l)>1: #Length is > 1 if it is formatted by the diff (+/-/_ _ char)
+						l=l[2:] #Remove first two characters
+					try: #Add character to current link
 						links[il]=links[il]+l
-					except IndexError:
+					except IndexError: #New link (first character)
 						links.append(l)
 				
 				#Detect closed bracket
@@ -331,46 +344,31 @@ for rc in RECENTCHANGES:
 						brackets=False
 				
 				#Detect pipe
-				if b==0 and brackets:
+				if brackets:
+					b=0 #Initialize brackets counter
 					#Stop recording link
-					if l.replace(" ", "").replace("+", "") == "|":
+					if l.replace("  ", "").replace("+ ", "") == "|":
 						il=il+1
 						brackets=False
 
-				#Read
-				if not newpage:
-					if l.startswith('+ '): #is added
-						#Add to add the added text
-						add=add+l.replace('+ ', '')
-
-						#Detect bracket
-						if l.replace('+ ', '') == "[" and b==0 and not brackets:
-							b=+1
-
-						#Detect second bracket
-						elif b==1 and not brackets:
-							b=0 #Initialize brackets counter
-							#Start recording link
-							if l.replace('+ ', '') == "[": 
-								brackets=True	
-
-					if l.startswith('- '): #is removed
-						#Add to rem the removed text
-						rem=rem+l.replace('- ', '')
-				else: #new page
-					#Add character to add
-					add=add+l
+				if l.startswith('+ ') or len(l)==1: #is added or new
+					#Add to add the added text
+					add=add+l.replace('+ ', '')
 
 					#Detect bracket
-					if l.replace(" ", "").replace("+", "")=="[" and b==0 and not brackets:
+					if l.replace('+ ', '') == "[" and b==0 and not brackets:
 						b=+1
 
 					#Detect second bracket
-					elif b==1:
+					elif b==1 and not brackets:
 						b=0 #Initialize brackets counter
 						#Start recording link
-						if l.replace(" ", "").replace("+", "")=="[":
-							brackets=True
+						if l.replace('+ ', '') == "[": 
+							brackets=True	
+
+				if l.startswith('- '): #is removed
+					#Add to rem the removed text
+					rem=rem+l.replace('- ', '')
 
 			#Print collected data (debug)
 			print(str(us['name'])) 

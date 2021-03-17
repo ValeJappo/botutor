@@ -5,17 +5,24 @@ import json
 from tinydb import TinyDB, Query
 from configparser import ConfigParser
 
+#Iteration counter (Debug)
 i=0
+
+#Define global variables
 messages={}
+
+#Get bot's login credentials
 config_object = ConfigParser()
 config_object.read("config.conf")
 info = config_object["INFO"]
 username=str(info["username"])
 password=str(info["password"])
 
+#API setup
 S = requests.Session()
 URL = "https://"+str(info["site"])+".wikipedia.org/w/api.php"
 
+#Check functions
 def disambigua(links, user):
 	for link in links:
 		try:
@@ -123,25 +130,31 @@ def traduzioneerrata(add, user):
 	if (add.replace(" ", "").lower().find("==riferimenti==")) > 0:
 		msg(user, "TRADUZIONEERRATA")
 
+#Send message
 def msg(user, msgid):
+	#read json
 	db = TinyDB('users.json')
 	User = Query()
 	with open('messages.json') as f:
 		data = json.load(f)
 		text=data[msgid]
 	notwarned=True
-	try:
+
+	try: #bool=!the user has ever been warned with msgid
 		notwarned=not db.search(User.name == str(user))[0][str(msgid)]
-	except (IndexError, KeyError) as e:
+	except (IndexError, KeyError) as e: #User not included in the file
 		notwarned=True
+
 	if notwarned:
 		print(msgid)
+		#add user/msgid:true to json
 		db.upsert({'name': str(user), str(msgid): True}, User.name == str(user))
-		try:
+		try: #add id to the messages for the user
 			messages[user].append(text)
 		except KeyError:
 			messages[user]=[text]
 
+#API Login
 def crsf_login():
 	# Token login
 	PARAMS0 = {
@@ -187,8 +200,10 @@ def crsf_login():
 
 	return DATA2['query']['tokens']['csrftoken']
 
+
 #Analyze recent changes
 
+#Recentchanges API
 PARAMS3 ={
 	"action": "query",
 	"format": "json",
@@ -201,19 +216,25 @@ PARAMS3 ={
 	"rcnamespace": "0|1|2|3|6|14"
 }
 
+#Get last update's timestamp
 try:
-	PARAMS3["rcstart"]=str(config_object["DATA"]["timestamp"])
+	PARAMS3["rcstart"]=str(config_object["DATA"]["timestamp"]) #Add to API's params
 	lasttimestamp=str(config_object["DATA"]["timestamp"])
-except (KeyError, NameError) as error:
+except (KeyError, NameError) as error: #There is no timestamp
 	os.system("python3 update_timestamp.py")
 	raise SystemExit
 
+#API Request
 R = S.get(url=URL, params=PARAMS3)
 DATA3 = R.json()
 RECENTCHANGES = DATA3['query']['recentchanges']
+
+#For each edit
 for rc in RECENTCHANGES:
-	i=i+1
+	i=i+1 #Increase iteration count (debug)
 	print(i)
+
+	#Get user's infos
 	PARAMS4={
 		"action": "query",
 		"format": "json",
@@ -224,138 +245,147 @@ for rc in RECENTCHANGES:
 	R = S.get(url=URL, params=PARAMS4)
 	DATA4 = R.json()
 	USERS=DATA4['query']['users']
+	us=USERS[0]
 
-	for us in USERS:
-		try:
-			edcount=us['editcount']
-		except KeyError: #Anonym users
-			edcount=0
+	try: #Get edits' number
+		edcount=us['editcount']
+	except KeyError: #Anonym users
+		edcount=0
 
-		try:
-			isbot=rc['bot']==""
-		except KeyError:
-			isbot=False
+	try: #Check if bot
+		isbot=rc['bot']==""
+	except KeyError: #Anonym user
+		isbot=False
+
+	if rc['user']=="ValeJappo":	#DEBUG <-- todo: rimuovere
+		edcount=0				#DEBUG
+
+	#Check if the edit should be considered
+	if edcount < 100 and rc['timestamp']!=lasttimestamp and not "mw-reverted" in rc["tags"] and not "mw-undo" in rc["tags"] and not "mw-manual-revert" in rc["tags"] and not isbot:
+		#API revisions
+		PARAMS5={
+			"action": "query",
+			"format": "json",
+			"prop": "revisions",
+			"revids": str(rc['revid'])+"|"+str(rc['old_revid']),
+			"formatversion": "latest",
+			"rvprop": "content|oresscores|sha1",
+			"rvslots": "*"
+		}
+		R = S.get(url=URL, params=PARAMS5)
+		DATA5 = R.json()
+		
+		try:#Get edit's ores score
+			score=float(DATA5['query']['pages'][0]['revisions'][1]['oresscores']['goodfaith']['true'])
+		except IndexError: #New page
+			score=float(DATA5['query']['pages'][0]['revisions'][0]['oresscores']['goodfaith']['true'])
+		except: #page deleted
+			print("Error")
+			break
 
 		if rc['user']=="ValeJappo":	#DEBUG <-- todo: rimuovere
-			edcount=0				#DEBUG
-
-		if edcount < 100 and rc['timestamp']!=lasttimestamp and not "mw-reverted" in rc["tags"] and not "mw-undo" in rc["tags"] and not "mw-manual-revert" in rc["tags"] and not isbot:
-			PARAMS5={
-				"action": "query",
-				"format": "json",
-				"prop": "revisions",
-				"revids": str(rc['revid'])+"|"+str(rc['old_revid']),
-				"formatversion": "latest",
-				"rvprop": "content|oresscores|sha1",
-				"rvslots": "*"
-			}
-			R = S.get(url=URL, params=PARAMS5)
-			DATA5 = R.json()
-			#input("Premi un tasto per continuare")#DEBUG-SLOW MODE
-			try:
-				score=float(DATA5['query']['pages'][0]['revisions'][1]['oresscores']['goodfaith']['true'])
+			score=1					#DEBUG
+		
+		#Check if the edit should be considered
+		if score >= 0.3:
+			#Get the differences
+			c1=DATA5['query']['pages'][0]['revisions'][0]['slots']['main']['content'] #Content after the edit
+			try: 
+				c2=DATA5['query']['pages'][0]['revisions'][1]['slots']['main']['content'] #Content before the edit
+				#Get diff
+				diff=difflib.ndiff(c1, c2)
+				newpage=False
 			except IndexError: #New page
-				score=float(DATA5['query']['pages'][0]['revisions'][0]['oresscores']['goodfaith']['true'])
-			except: #page deleted
-				print("Errore")
-				break
+				diff=c1
+				newpage=True
 
-			if rc['user']=="ValeJappo":	#DEBUG <-- todo: rimuovere
-				score=1					#DEBUG
-			if score >= 0.3:
-				c1=DATA5['query']['pages'][0]['revisions'][0]['slots']['main']['content']
-				try:
-					c2=DATA5['query']['pages'][0]['revisions'][1]['slots']['main']['content']
-					diff=difflib.ndiff(c1, c2)
-					newpage=False
-				except IndexError: #New page
-					diff=c1
-					newpage=True
-
-				add=""
-				rem=""
-				links=[]
-				il=0
-				b=0
-				brackets=False
+			#Define variables
+			add=""
+			rem=""
+			links=[]
+			il=0
+			b=0
+			brackets=False
+			
+			
+			#For each character
+			for l in diff:
+				if brackets and l.replace('+ ', '').replace('  ', '') != "]" and l.replace('+ ', '').replace(' ', '') != "|" and not l.startswith('- '):
+					if len(l)>1:
+						l=l[2:]
+					try:
+						links[il]=links[il]+l
+					except IndexError:
+						links.append(l)
 				
-				for l in diff:#todo: se si divide in due un link ([[Giappone]] --> [[Gia]][[ppone]]), solo il secondo viene considerato
-					if brackets and l.replace('+ ', '').replace('  ', '') != "]" and l.replace('+ ', '').replace(' ', '') != "|" and not l.startswith('- '):
-						if len(l)>1:
-							l=l[2:]
-						try:
-							links[il]=links[il]+l
-						except IndexError:
-							links.append(l)
+				if l.replace('+ ', '').replace(' ', '') == "]" and b==0 and brackets:
+					b=-1
 					
-					if l.replace('+ ', '').replace(' ', '') == "]" and b==0 and brackets:
-						b=-1
-						
-					if b==-1:
-						b=0
-						if (l.replace('+ ', '').replace(' ', '') == "]" and brackets) or (l.replace(" ", "").replace("+", "") == "|" and brackets):
-							il=il+1
-							brackets=False
+				if b==-1:
+					b=0
+					if (l.replace('+ ', '').replace(' ', '') == "]" and brackets) or (l.replace(" ", "").replace("+", "") == "|" and brackets):
+						il=il+1
+						brackets=False
 
-					if b==0 and brackets:
-						if l.replace(" ", "").replace("+", "") == "|":
-							il=il+1
-							brackets=False
+				if b==0 and brackets:
+					if l.replace(" ", "").replace("+", "") == "|":
+						il=il+1
+						brackets=False
 
-					if not newpage:
-						if l.startswith('+ '):
-							add=add+l.replace('+ ', '')
-							if l.replace('+ ', '') == "[" and b==0 and not brackets:
-								b=+1
-							elif b==1 and not brackets:
-								b=0
-								if l.replace('+ ', '') == "[": 
-									brackets=True	
-
-						if l.startswith('- '):
-							rem=rem+l.replace('- ', '')
-					else:
-						add=add+l
-						if l.replace(" ", "").replace("+", "")=="[" and b==0 and not brackets:
+				if not newpage:
+					if l.startswith('+ '):
+						add=add+l.replace('+ ', '')
+						if l.replace('+ ', '') == "[" and b==0 and not brackets:
 							b=+1
-						elif b==1:
+						elif b==1 and not brackets:
 							b=0
-							if l.replace(" ", "").replace("+", "")=="[":
-								brackets=True
-				print(str(us['name'])) 
-				print("AGGIUNTO:")
-				print(add)
-				print("RIMOSSO:")
-				print(rem)
-				print("COLLEGAMENTI:")
-				print(links)
-						
-				#controlli <-----------------------------------------------------------
-				if rc["ns"]%2==0:
-					if not (rc["ns"]==3 and DATA5['query']['pages'][0]['title'].replace("User:", "").replace("Utente:", "") == rc['user']):
-						disambigua(links, rc['user'])
-						linkfile(add, rc['user'])
-						citaweb(add, rc['user'])
-						wrongref(add, rc['user'])
-						sectionlink(add, rc['user'])
-						if rc['ns']==14: #categoria
-							linkcat(links, rc['user'])
-						if newpage:
-							sezionistandard(add, rc['user'])
-							traduzioneerrata(add, rc['user'])
-							if "contenttranslation" in rc['tags']:
-								tradottoda(DATA5['query']['pages'][0]['title'], rc['user'])
+							if l.replace('+ ', '') == "[": 
+								brackets=True	
 
-				else:#discussioni
-					if DATA5['query']['pages'][0]['title'].replace("User talk:", "").replace("Discussioni utente:", "") == rc['user']:
-						print("TALK")
-				#fine ----------------------------------------------------------------
-				
-			else:
-				print("NO - "+str(us['name']))
+					if l.startswith('- '):
+						rem=rem+l.replace('- ', '')
+				else:
+					add=add+l
+					if l.replace(" ", "").replace("+", "")=="[" and b==0 and not brackets:
+						b=+1
+					elif b==1:
+						b=0
+						if l.replace(" ", "").replace("+", "")=="[":
+							brackets=True
+			print(str(us['name'])) 
+			print("AGGIUNTO:")
+			print(add)
+			print("RIMOSSO:")
+			print(rem)
+			print("COLLEGAMENTI:")
+			print(links)
+					
+			#controlli <-----------------------------------------------------------
+			if rc["ns"]%2==0:
+				if not (rc["ns"]==3 and DATA5['query']['pages'][0]['title'].replace("User:", "").replace("Utente:", "") == rc['user']):
+					disambigua(links, rc['user'])
+					linkfile(add, rc['user'])
+					citaweb(add, rc['user'])
+					wrongref(add, rc['user'])
+					sectionlink(add, rc['user'])
+					if rc['ns']==14: #categoria
+						linkcat(links, rc['user'])
+					if newpage:
+						sezionistandard(add, rc['user'])
+						traduzioneerrata(add, rc['user'])
+						if "contenttranslation" in rc['tags']:
+							tradottoda(DATA5['query']['pages'][0]['title'], rc['user'])
+
+			else:#discussioni
+				if DATA5['query']['pages'][0]['title'].replace("User talk:", "").replace("Discussioni utente:", "") == rc['user']:
+					print("TALK")
+			#fine ----------------------------------------------------------------
+			
 		else:
 			print("NO - "+str(us['name']))
-		print("-"*10)
+	else:
+		print("NO - "+str(us['name']))
+	print("-"*10)
 #aggiungi messaggi
 for user in messages:
 	txt="\n\n== Aiuto ==\n\nCiao {{subst:ROOTPAGENAME}}, ti scrivo in quanto ho notato che hai effettuato degli errori comuni ai nuovi utenti, permettimi di spiegarti il problema nei dettagli!"
@@ -376,4 +406,4 @@ for user in messages:
 		}
 		R = S.post(URL, data=PARAMS_EDIT)
 
-os.system("python1 update_timestamp.py")
+os.system("python update_timestamp.py")

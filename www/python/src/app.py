@@ -1,4 +1,5 @@
 import json
+from github_webhook import Webhook
 import os
 from flask import Flask
 from flask import render_template
@@ -15,7 +16,7 @@ feed = feedparser.parse(url)
 
 
 app = Flask(__name__)
-
+webhook = Webhook(app)
 # Generate a random secret application key
 #
 # NOTE: this key changes every invocation. In an actual application, the key
@@ -41,9 +42,9 @@ print(keys["consumer_key"])
 mwoauth = MWOAuth(base_url='https://test.wikipedia.org/w',clean_url='https://test.wikipedia.org/wiki',consumer_key=keys["consumer_key"],consumer_secret=keys["consumer_secret"])   
 app.register_blueprint(mwoauth.bp)
 
-@app.route("/git-pull.php")
-def pull():
-    return("<?php if(isset($_SERVER['HTTP_X_GITHUB_EVENT'])) { `git -C ../www/static pull`; } ?>")
+@webhook.hook()
+def on_push(data):
+    os.system("cd $HOME && git pull master origin")
 
 @app.route("/")
 def index():

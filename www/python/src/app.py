@@ -44,7 +44,7 @@ app.register_blueprint(mwoauth.bp)
 
 @webhook.hook()
 def on_push(data):
-    os.system("cd $HOME && git pull master origin")
+    os.system("cd $HOME && git pull origin master")
 
 @app.route("/")
 def index():

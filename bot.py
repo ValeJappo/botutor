@@ -307,9 +307,9 @@ for rc in RECENTCHANGES:
 			b=0
 			brackets=False
 			
-			
-			#For each character
-			for l in diff:
+			#Get diff's added, removed and linked text
+			for l in diff: #For each character
+				#Record link
 				if brackets and l.replace('+ ', '').replace('  ', '') != "]" and l.replace('+ ', '').replace(' ', '') != "|" and not l.startswith('- '):
 					if len(l)>1:
 						l=l[2:]
@@ -318,75 +318,97 @@ for rc in RECENTCHANGES:
 					except IndexError:
 						links.append(l)
 				
+				#Detect closed bracket
 				if l.replace('+ ', '').replace(' ', '') == "]" and b==0 and brackets:
 					b=-1
-					
+
+				#Detect second closed bracket	
 				if b==-1:
-					b=0
+					b=0 #Initialize brackets counter
+					#Stop recording link
 					if (l.replace('+ ', '').replace(' ', '') == "]" and brackets) or (l.replace(" ", "").replace("+", "") == "|" and brackets):
 						il=il+1
 						brackets=False
-
+				
+				#Detect pipe
 				if b==0 and brackets:
+					#Stop recording link
 					if l.replace(" ", "").replace("+", "") == "|":
 						il=il+1
 						brackets=False
 
+				#Read
 				if not newpage:
-					if l.startswith('+ '):
+					if l.startswith('+ '): #is added
+						#Add to add the added text
 						add=add+l.replace('+ ', '')
+
+						#Detect bracket
 						if l.replace('+ ', '') == "[" and b==0 and not brackets:
 							b=+1
+
+						#Detect second bracket
 						elif b==1 and not brackets:
-							b=0
+							b=0 #Initialize brackets counter
+							#Start recording link
 							if l.replace('+ ', '') == "[": 
 								brackets=True	
 
-					if l.startswith('- '):
+					if l.startswith('- '): #is removed
+						#Add to rem the removed text
 						rem=rem+l.replace('- ', '')
-				else:
+				else: #new page
+					#Add character to add
 					add=add+l
+
+					#Detect bracket
 					if l.replace(" ", "").replace("+", "")=="[" and b==0 and not brackets:
 						b=+1
+
+					#Detect second bracket
 					elif b==1:
-						b=0
+						b=0 #Initialize brackets counter
+						#Start recording link
 						if l.replace(" ", "").replace("+", "")=="[":
 							brackets=True
+
+			#Print collected data (debug)
 			print(str(us['name'])) 
-			print("AGGIUNTO:")
+			print("ADDED:")
 			print(add)
-			print("RIMOSSO:")
+			print("REMOVED:")
 			print(rem)
-			print("COLLEGAMENTI:")
+			print("LINKS:")
 			print(links)
 					
-			#controlli <-----------------------------------------------------------
-			if rc["ns"]%2==0:
-				if not (rc["ns"]==3 and DATA5['query']['pages'][0]['title'].replace("User:", "").replace("Utente:", "") == rc['user']):
+			#Call check functions
+			if rc["ns"]%2==0: #Not talks
+				if not (rc["ns"]==3 and DATA5['query']['pages'][0]['title'].replace("User:", "").replace("Utente:", "") == rc['user']): #User but not userpage
 					disambigua(links, rc['user'])
 					linkfile(add, rc['user'])
 					citaweb(add, rc['user'])
 					wrongref(add, rc['user'])
 					sectionlink(add, rc['user'])
-					if rc['ns']==14: #categoria
+					if rc['ns']==14: #Category
 						linkcat(links, rc['user'])
-					if newpage:
+					if newpage: #New page
 						sezionistandard(add, rc['user'])
 						traduzioneerrata(add, rc['user'])
-						if "contenttranslation" in rc['tags']:
+						if "contenttranslation" in rc['tags']: #Content translation
 							tradottoda(DATA5['query']['pages'][0]['title'], rc['user'])
 
-			else:#discussioni
+			else: #Talks
 				if DATA5['query']['pages'][0]['title'].replace("User talk:", "").replace("Discussioni utente:", "") == rc['user']:
 					print("TALK")
-			#fine ----------------------------------------------------------------
 			
-		else:
+		else: #ores score too low (debug)
 			print("NO - "+str(us['name']))
-	else:
+	else: #edit not considered (debug)
 		print("NO - "+str(us['name']))
+	#divisor (debug)
 	print("-"*10)
-#aggiungi messaggi
+
+#Write messages
 for user in messages:
 	txt="\n\n== Aiuto ==\n\nCiao {{subst:ROOTPAGENAME}}, ti scrivo in quanto ho notato che hai effettuato degli errori comuni ai nuovi utenti, permettimi di spiegarti il problema nei dettagli!"
 	
@@ -406,4 +428,5 @@ for user in messages:
 		}
 		R = S.post(URL, data=PARAMS_EDIT)
 
+#Set current timestamp as last update's timestamp
 os.system("python update_timestamp.py")

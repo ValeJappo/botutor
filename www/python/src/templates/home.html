@@ -45,5 +45,9 @@
     {% if user %}
     <!-- Actual content -->
         <div id="page"></div>
+
+    <!-- Invisible divs where other HTML files are loaded. home.js will include them in the booklet layout-->
+        <div id="modifiche" style="display:none">{% include 'modifiche.html' %}</div>
+        <div id="notifications" style="display:none">{% include 'notifications.html' %}</div>
     {% endif %}
 </body>

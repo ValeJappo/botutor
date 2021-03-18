@@ -154,7 +154,7 @@ def msg(user, msgid):
 		except KeyError:
 			messages[user]=[text]
 
-#API Login
+#Login function
 def crsf_login():
 	# Token login
 	PARAMS0 = {
@@ -170,7 +170,6 @@ def crsf_login():
 	LOGIN_TOKEN = DATA0['query']['tokens']['logintoken']
 
 	# Login
-
 	PARAMS1 = {
 		'action': "clientlogin",
 		'username': username,
@@ -198,6 +197,7 @@ def crsf_login():
 	R = S.get(url=URL, params=PARAMS2)
 	DATA2 = R.json()
 
+	#Return token
 	return DATA2['query']['tokens']['csrftoken']
 
 
@@ -244,17 +244,13 @@ for rc in RECENTCHANGES:
 	}
 	R = S.get(url=URL, params=PARAMS4)
 	DATA4 = R.json()
-	USERS=DATA4['query']['users']
-	us=USERS[0]
+	us=DATA4['query']['users'][0]
 
-	try: #Get edits' number
-		edcount=us['editcount']
+	try:
+		edcount=us['editcount'] #Get edits' number
+		isbot=rc['bot']=="" #Check if bot
 	except KeyError: #Anonym users
 		edcount=0
-
-	try: #Check if bot
-		isbot=rc['bot']==""
-	except KeyError: #Anonym user
 		isbot=False
 
 	if rc['user']=="ValeJappo":	#DEBUG <-- todo: rimuovere
@@ -296,7 +292,7 @@ for rc in RECENTCHANGES:
 				diff=difflib.ndiff(c1, c2)
 				newpage=False
 			except IndexError: #New page
-				diff=c1
+				diff=c1 #diff = content
 				newpage=True
 
 			"""
@@ -351,7 +347,7 @@ for rc in RECENTCHANGES:
 						il=il+1
 						brackets=False
 
-				if l.startswith('+ ') or len(l)==1: #is added or new
+				if l.startswith('+ ') or len(l)==1: #is added or new page
 					#Add to add the added text
 					add=add+l.replace('+ ', '')
 

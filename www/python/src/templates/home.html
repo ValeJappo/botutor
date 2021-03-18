@@ -1,9 +1,26 @@
-
 <!doctype html>
 <head>
+    <!-- Login required -->
     {% if not user %}
+        <!-- Redirect -->
         <meta http-equiv="refresh" content="0; URL='/login'" />
+
+        <!-- Warning -->
+        <script>
+            //Create message
+            var msgalert = new OO.ui.MessageWidget( {
+                type: 'warning',
+                label: 'Per proseguire devi effettuare il login con il tuo account Mediawiki. Stai venendo automaticamente reindirizzato/a.\n\nSe nulla succede, premi il pulsante "login" - in alto a destra!'
+            } );
+            
+            //Append it    
+            $( document ).ready(function() {
+                $(".header").after(msgalert.$element);
+            });
+        </script> 
     {% endif %}
+
+    <!-- Stylesheets, libraries and other files  -->
     <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='styles/home.css') }}">
     <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='node_modules/oojs-ui/dist/oojs-ui-wikimediaui.min.css') }}">
     <script src="{{ url_for('static', filename='node_modules/jquery/dist/jquery.min.js') }}"></script>
@@ -16,6 +33,7 @@
 </head>
 
 <body>
+    <!-- Header -->
     <div class="header">
         <h1>Pannello di tutoraggio</h1>
         {% if user %}
@@ -25,23 +43,7 @@
         {% endif %}
     </div>
     {% if user %}
+    <!-- Actual content -->
         <div id="page"></div>
-        <div id="segui" style="display:none">{% include 'segui.html' %}</div>
-        <div id="modifiche" style="display:none">{% include 'modifiche.html' %}</div>
-        <div id="notifications" style="display:none">{% include 'notifications.html' %}</div>
-    {% else %}
-        <script>
-        var msgalert = new OO.ui.MessageWidget( {
-            type: 'warning',
-            label: 'Per proseguire devi effettuare il login con il tuo account Mediawiki. Stai venendo automaticamente reindirizzato/a.\n\nSe nulla succede, premi il pulsante "login" - in alto a destra!'
-        } );
-        var prog = new OO.ui.ProgressBarWidget( {
-            progress: false
-        } )
-
-        $( document ).ready(function() {
-            $(".header").after(msgalert.$element);
-        });
-        </script> 
     {% endif %}
 </body>

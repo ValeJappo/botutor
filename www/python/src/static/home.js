@@ -181,7 +181,8 @@ function FollowPage( name, config ) {
                 "action": "query",
                 "format": "json",
                 "list": "allusers",
-                "auprefix": value
+                "auprefix": value.charAt(0).toUpperCase() + value.slice(1)
+
             };
             url = url + "?origin=*";
             Object.keys(params).forEach(function(key){url += "&" + key + "=" + params[key];});

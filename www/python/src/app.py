@@ -21,7 +21,7 @@ keys = config_object["KEYS"]
 app.secret_key = keys["app_secret"]
 
 # OAuth
-mwoauth = MWOAuth(base_url='https://test.wikipedia.org/w',clean_url='https://test.wikipedia.org/wiki',consumer_key=keys["consumer_key"],consumer_secret=keys["consumer_secret"])   
+mwoauth = MWOAuth(base_url='https://it.wikipedia.org/w',clean_url='https://it.wikipedia.org/wiki',consumer_key=keys["consumer_key"],consumer_secret=keys["consumer_secret"])   
 app.register_blueprint(mwoauth.bp)
 
 # Get OAuth user

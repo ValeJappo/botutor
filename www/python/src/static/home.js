@@ -1,62 +1,85 @@
-function PageOneLayout( name, config ) {
-    PageOneLayout.super.call( this, name, config );
+// Create Main page
+function HomePage( name, config ) {
+    HomePage.super.call( this, name, config );
     var contacts_msg=new OO.ui.ButtonWidget( {
         icon: 'userTalk',
-        label: "Contatti"
+        label: "Contatti",
+        href: "#contacts"
     } );
     var documentazione=new OO.ui.ButtonWidget( {
         label: 'Documentazione',
-        icon: 'book'
+        icon: 'book',
+        href: "#docs"
     } );
     var codice=new OO.ui.ButtonWidget( {
         label: 'Codice',
-        icon: 'code'
+        icon: 'code',
+        href: '#code'
     } );
     this.$element.append( '<p>Pagina principale.</p>' );
     this.$element.append(documentazione.$element, contacts_msg.$element, codice.$element);
 }
-OO.inheritClass( PageOneLayout, OO.ui.PageLayout );
-PageOneLayout.prototype.setupOutlineItem = function () {
+OO.inheritClass( HomePage, OO.ui.PageLayout );
+HomePage.prototype.setupOutlineItem = function () {
     this.outlineItem.setLabel( 'Pagina principale' );
 };
 
-function PageTwoLayout( name, config ) {
-    PageTwoLayout.super.call( this, name, config );
+//Create Follow page
+function FollowPage( name, config ) {
+    FollowPage.super.call( this, name, config );
     this.$element.attr("id", "p-segui");
 }
-OO.inheritClass( PageTwoLayout, OO.ui.PageLayout );
-PageTwoLayout.prototype.setupOutlineItem = function () {
+OO.inheritClass( FollowPage, OO.ui.PageLayout );
+FollowPage.prototype.setupOutlineItem = function () {
     this.outlineItem.setLabel( 'Segui un utente' );
 };
 
-function PageThreeLayout( name, config ) {
-    PageThreeLayout.super.call( this, name, config );
+// Create Recent changes page
+function ChangesPage( name, config ) {
+    ChangesPage.super.call( this, name, config );
     this.$element.attr("id", "p-modifiche");
 }
-OO.inheritClass( PageThreeLayout, OO.ui.PageLayout );
-PageThreeLayout.prototype.setupOutlineItem = function () {
+OO.inheritClass( ChangesPage, OO.ui.PageLayout );
+ChangesPage.prototype.setupOutlineItem = function () {
     this.outlineItem.setLabel( 'Ultime modifiche' );
 };
-function PageFourLayout( name, config ) {
-    PageFourLayout.super.call( this, name, config );
+
+//Create Test page
+function TestPage( name, config ) {
+    TestPage.super.call( this, name, config );
     this.$element.append( '<p>Pagina di test.</p>' );
 }
-OO.inheritClass( PageFourLayout, OO.ui.PageLayout );
-PageFourLayout.prototype.setupOutlineItem = function () {
+OO.inheritClass( TestPage, OO.ui.PageLayout );
+TestPage.prototype.setupOutlineItem = function () {
+    this.outlineItem.setLabel( 'Pagina di test' );
     this.outlineItem.$element.attr("style", "display:none;");
-
+    this.outlineItem.$element.addClass("unlisted");
 };
 
-var page1 = new PageOneLayout( 'home' ),
-    page2 = new PageTwoLayout( 'segui' ),
-    page3 = new PageThreeLayout ('modifiche'),
-    page4 = new PageFourLayout ('test');
+function DocsPage( name, config ) {
+    DocsPage.super.call( this, name, config );
+    this.$element.append( '<h1>Documentazione</h1>' );
+}
+OO.inheritClass( DocsPage, OO.ui.PageLayout );
+DocsPage.prototype.setupOutlineItem = function () {
+    this.outlineItem.setLabel( 'Documentazione' );
+    this.outlineItem.$element.attr("style", "display:none;");
+    this.outlineItem.$element.addClass("unlisted");
+};
 
+//Add pages into variables
+var page1 = new HomePage( 'home' ),
+    page2 = new FollowPage( 'segui' ),
+    page3 = new ChangesPage ('modifiche'),
+    page4 = new TestPage ('test'),
+    page5 = new DocsPage ('docs');
+
+//Create booklet layout
 var booklet = new OO.ui.BookletLayout( {
     outlined: true
 } );
 
-booklet.addPages( [ page1, page2, page3, page4 ] );
+booklet.addPages( [ page1, page2, page3, page4, page5 ] );
 booklet.$element.css("margin-top", "3em");
 $( document ).ready(function() {
     $( "#page" ).append( booklet.$element );
@@ -65,9 +88,42 @@ $( document ).ready(function() {
     $("#p-modifiche").append($("#modifiche"));
     $("#modifiche").attr("style", "");
 });
-if(window.location.hash) {
-    booklet.setPage(window.location.hash.replace("#", ""));
-  }
+
+// Get page changes
+var lastUnlisted="";
+booklet.on("set", function(page){
+    //Remove current url hash
+    
+    if(window.history.pushState) {
+        window.history.pushState('', '/', window.location.pathname)
+    } else {
+        window.location.hash = '';
+    }
+    
+    //Toggle button's visibility if unlisted
+    if (lastUnlisted!="" && lastUnlisted!=page.name){
+        console.log(lastUnlisted);
+        booklet.getPage(lastUnlisted).outlineItem.$element.attr("style", "display:none;");
+        lastUnlisted="";
+    }
+    if(booklet.getPage(page.name).outlineItem.$element.hasClass("unlisted") && lastUnlisted!=page.name){
+        console.log(page.name);
+        booklet.getPage(page.name).outlineItem.$element.attr("style", "");
+        lastUnlisted=page.name
+    }
+});
+
+// Get url hash
+function hash(){
+    console.log(window.location.hash)
+    if(window.location.hash) // Change page
+        booklet.setPage(window.location.hash.replace("#", ""));
+}
+hash();
+window.onhashchange = function(){hash()};
+
+
+//Create Header's buttons
 var menu = new OO.ui.ButtonMenuSelectWidget( {
     icon: 'settings',
     label: 'Impostazioni',
@@ -148,13 +204,13 @@ notifications.on("click", function(){
     var myDialog = new MyDialog( {
         size: 'larger'
     } );
-    // Create and append a window manager, which opens and closes the window.
+    // Create and append a window manager, which opens and closes the window
     var windowManager = new OO.ui.WindowManager();
     curwindow=windowManager;
     windowManager.on("closing", function(){notifications.setValue(false);});
     $( document.body ).append( windowManager.$element );
     windowManager.addWindows( [ myDialog ] );
-    // Open the window!
+    // Open the window
     windowManager.openWindow( myDialog );
     console.log("notifications");
 })
@@ -179,6 +235,7 @@ var sidebar_toggle = new OO.ui.ToggleButtonWidget( {
     value: false
 } );
 sidebar_toggle.on("click", function(){booklet.toggleMenu()});
+//Append buttons
 $( document ).ready(function() {
     var arr = [notifications, menu, logout, wiki];
     arr.forEach(function(item, index){

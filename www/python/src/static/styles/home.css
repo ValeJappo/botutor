@@ -56,15 +56,14 @@ p, h1, h2, h3, td, div, span{
     margin-right: 10%;
     margin-left: 10%;
 }
-.column {
+.editslist {
     float: left;
-    width: 50%;
+    width: 25%;
   }
   
-.row:after {
-    content: "";
-    display: table;
-    clear: both;
+.diffdisplay {
+    margin-left: 25%;
+    width: 75%;
 }
 
 .diff-col tr{

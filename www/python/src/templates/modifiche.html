@@ -3,22 +3,22 @@
     <link rel="stylesheet" href="https://www.mediawiki.org/w/load.php?modules=mediawiki.legacy.shared|mediawiki.diff.styles&only=styles">
     
     <script>
-        function checkOverflow(el)
-        {
-        var curOverflow = el.style.overflow;
-
-        if ( !curOverflow || curOverflow === "visible" )
-            el.style.overflow = "hidden";
-
-        var isOverflowing = el.clientWidth < el.scrollWidth 
-            || el.clientHeight < el.scrollHeight;
-
-        el.style.overflow = curOverflow;
-
-        return isOverflowing;
-        }
+        var stack = new OO.ui.StackLayout( {
+            continuous: true,
+            classes: ['editslist'],
+            items: [],
+        });
+        var diffdisplay = new OO.ui.StackLayout( {
+            continuous: false,
+            classes: ['diffdisplay'],
+            items: [],
+        });
+        $( document ).ready(function() {
+            $(".edits-content").append(stack.$element, diffdisplay.$element);
+        });
 
         function diff(revid, oldrevid, object){
+            console.log("click");
             var url2 = "https://it.wikipedia.org/w/api.php"; 
             if (oldrevid==0) //new page
                 alert("new");
@@ -38,8 +38,14 @@
                 .then(function(response){return response.json();})
                 .then(function(response) {
                     var diff = response.compare.bodies.main;
-                    $(".diff-col").html(diff);
-                    $(".prev").html("");
+                    var difflay=new OO.ui.PanelLayout( {
+                        $content: $(diff),
+                        classes: [ 'five' ], 
+                        scrollable: true,
+                        expanded: true
+                    });
+                    diffdisplay.addItems(difflay);
+                    diffdisplay.setItem(difflay);
                 });
         }
 
@@ -59,10 +65,6 @@
         url = url + "?origin=*";
         Object.keys(params).forEach(function(key){url += "&" + key + "=" + params[key];});
         setInterval(function() {
-            if (checkOverflow(document.getElementsByClassName("diff-col")[0])){
-                $(".prev").html(document.getElementsByClassName("diff-col")[0].innerHTML);
-                $(".diff-col").html("");
-            }
             fetch(url)
                 .then(function(response){return response.json();})
                 .then(function(response) {
@@ -75,15 +77,21 @@
                             var ores=edit.oresscores.goodfaith;
 
                         if (lrev != edit.revid && ores >= 0.3){
-                            var obj=new OO.ui.ButtonWidget( {
-                                framed: false,
-                                indicator: 'down',
-                                label: edit.user
+                            console.log(edit.user);
+                            var bttn=new OO.ui.ButtonWidget( {
+                                    framed: false,
+                                    indicator: 'down',
+                                    label: edit.user
+                            } );
+                            bttn.on("click", function(){diff(edit.revid, edit.old_revid, this.$element)});
+                            var obj=new OO.ui.PanelLayout( {
+                                $element: bttn.$element,
+                                classes: [ 'five' ], 
+                                padded: true,
+                                scrollable: true,
+                                expanded: true
                             } )
-                            obj.on("click", function(){diff(edit.revid, edit.old_revid, this.$element)});
-                            $(".content-modifiche").attr("style", "display:block");
-                            $(".content-modifiche").prepend(obj.$element);
-                            obj.$label.append("<p> - Nome Pagina</p>")
+                            stack.addItems(obj, 0)
                             lrev=edit.revid;
                         }
                     }
@@ -94,13 +102,5 @@
 </head>
 
 <body>
-    <div class="prev"></div>
-    <div class="row">
-        <div class="column">
-            <div class="content-modifiche">
-            </div>
-        </div><div class="column">
-            <div class="diff-col"></div>
-        </div>
-    </div>
+    <div class="edits-content"></div>
 </body>

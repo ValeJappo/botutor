@@ -335,7 +335,7 @@ var booklet = new OO.ui.BookletLayout( {
 } );
 
 booklet.addPages( [ page1, page2, page3, page4, page5 ] );
-booklet.$element.css("margin-top", "3em");
+booklet.$element.css("margin-top", "3.1em");
 $( document ).ready(function() {
     $( "#page" ).append( booklet.$element );
     $("#p-segui").append($("#segui"));

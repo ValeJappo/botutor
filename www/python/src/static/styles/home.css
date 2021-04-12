@@ -13,8 +13,9 @@ a:link {
     align-items: center;
     flex-flow: row;
     height: 3em;
-    background: #f5f5f5;
+    background: white;
     border-bottom: solid 1px #ddd;
+    box-shadow: 1px 1px 5px #aaaaaa;
 }
 
 .header p{

@@ -5,9 +5,6 @@ import json
 from tinydb import TinyDB, Query
 from configparser import ConfigParser
 
-#Iteration counter (Debug)
-i=0
-
 #Define global variables
 messages={}
 
@@ -41,22 +38,33 @@ def disambigua(links, user):
 		except KeyError:#Page do not exist
 			pass			
 	
-def linkfile(add, user):
-	if add.find("upload.wikimedia.org") >= 0:
-		msg(user, "LINKFILE")
+def linkfile(add, user, ve):
+	if add.lower().replace(" ", "").find("immagine=http") >= 0:
+			msg(user, "LINKFILE_TMP")
+	elif add.find("upload.wikimedia.org") >= 0:
+		if ve:
+			msg(user, "LINKFILE_VE")
+		else:
+			msg(user, "LINKFILE")
 
-def linkcat(links, user):
+def linkcat(links, user, ve):
 	for link in links:
 		if link.find(":") < 0:
-			msg(user, "LINKCAT")
+			if ve:
+				msg(user, "LINKCAT_VE")
+			else:
+				msg(user, "LINKCAT")
 
 def citaweb(add, user):
-	if add.find("<ref>[http") >= 0 or add.find("<ref>http") >= 0:
+	if add.find("<ref>[http://") >= 0 or add.find("<ref>http://") >= 0:
 		msg(user, "CITAWEB")	
 
-def wrongref(add, user):
+def wrongref(add, user, ve):
 	if add.find("[1]") >=0 and add.find("[2]") >= 0 and add.find("[[1]]") < 0 and add.find("[[2]]") < 0:
-		msg(user, "WRONGREF")
+		if ve:
+			msg(user, "WRONGREF_VE")
+		else:
+			msg(user, "WRONGREF")
 
 def sectionlink(add, user):
 	if add.replace(" ", "").find("==[[") >=0 and add.replace(" ", "").find("]]==") >=0:
@@ -66,7 +74,7 @@ def sectionformat(add, user):
 	if add.replace(" ", "").find("==''") >=0 and add.replace(" ", "").find("''==") >=0:
 		msg(user, "SECTIONFORMAT")
 
-def sezionistandard(add, user):
+def sezionistandard(add, user): #todo: fix
 	sections=[]
 	if (add.replace(" ", "").lower().find("==note==")) > 0:
 		"""
@@ -109,6 +117,26 @@ def sezionistandard(add, user):
 			msg(user, "SEZIONISTANDARD")
 			i=i+1
 
+def extlink(add, user):
+	edindex=add.replace(" ", "").lower().find("==collegamentiesterni==")
+	if edindex==-1:
+		edindex=len(add.replace(" ", ""))-1
+	stindex1=0
+	stindex2=0
+	while add.replace(" ", "").lower().find("http://", stindex1, edindex)!=-1 or add.replace(" ", "").lower().find("https://", stindex2, edindex)!=-1:
+		if add.replace(" ", "").lower().find("http://", stindex1, edindex)>1:
+			if add.replace(" ", "")[add.replace(" ", "").lower().find("http://", stindex1, edindex)-1]!="=" and add.replace(" ", "")[add.replace(" ", "").lower().find("http://", stindex1, edindex)-1]!=">" and add.replace(" ", "")[add.replace(" ", "").lower().find("http://", stindex1, edindex)-2]!="=" and add.replace(" ", "")[add.replace(" ", "").lower().find("http://", stindex1, edindex)-1]!=">":
+				msg(user, "EXTLINK")
+				return None
+			else:
+				stindex1=add.replace(" ", "").lower().find("http://", stindex1, edindex)+1
+		if add.replace(" ", "").lower().find("https://", stindex2, edindex)>1:
+			if add.replace(" ", "")[add.replace(" ", "").lower().find("https://", stindex2, edindex)-1]!="=" and add.replace(" ", "")[add.replace(" ", "").lower().find("https://", stindex2, edindex)-1]!=">" and add.replace(" ", "")[add.replace(" ", "").lower().find("https://", stindex2, edindex)-2]!="=" and add.replace(" ", "")[add.replace(" ", "").lower().find("https://", stindex2, edindex)-1]!=">":
+				msg(user, "EXTLINK")
+				return None
+			else:
+				stindex2=add.replace(" ", "").lower().find("https://", stindex2, edindex)+1
+
 def tradottoda(title, user):
 	try:
 		PARAMS={
@@ -130,25 +158,70 @@ def traduzioneerrata(add, user):
 	if (add.replace(" ", "").lower().find("==riferimenti==")) > 0:
 		msg(user, "TRADUZIONEERRATA")
 
+def firma(add, rc):
+	if (add.find(":"+rc['user']) == -1): #Not signed
+		try:
+			PARAMS={
+			"action": "query",
+			"format": "json",
+			"prop": "revisions",
+			"revids": rc['old_revid'],
+			"formatversion": "2",
+			"rvprop": "user",
+			"rvslots": "main"
+			}
+			R = S.get(url=URL, params=PARAMS)
+			DATA = R.json()
+			if DATA['query']['pages'][0]['revisions'][0]['user'] != rc['user']: #If previous edit is not by this user
+				msg(rc['user'], "FIRMA")
+		except KeyError:#New page
+			pass
+
+def ping(add, rc, isUserTalk):
+	if isUserTalk and len(add)>20: #Is user talk or is signed
+		try:
+			PARAMS={
+			"action": "query",
+			"format": "json",
+			"prop": "revisions",
+			"revids": rc['old_revid'],
+			"formatversion": "2",
+			"rvprop": "user",
+			"rvslots": "main"
+			}
+			R = S.get(url=URL, params=PARAMS)
+			DATA = R.json()
+			isPreviousEditOk=DATA['query']['pages'][0]['revisions'][0]['user'] != rc['user'] #If previous edit is not by this user
+		
+		except KeyError:#New page
+			isPreviousEditOk=True
+
+		if isPreviousEditOk:
+			if add.lower().replace("utente:", "user:").find("user:") == add.lower().replace("utente:", "user:").find("user:"+rc['user'].lower()) and add.lower().replace(" ","").replace("{{at|", "{{ping|").replace("{{replyto|", "{{ping|").find("{{ping|") == -1: #If nobody is mentioned
+				if "discussiontools-visual" in rc['tags']:
+					msg(rc['user'], "PING_VE")
+				else:
+					msg(rc['user'], "PING")
+
 #Send message function
 def msg(user, msgid):
 	#read json
 	db = TinyDB('users.json')
 	User = Query()
-	with open('messages.json') as f:
+	with open('messages.json', encoding="utf-8") as f:
 		data = json.load(f)
 		text=data[msgid]
 	notwarned=True
 
 	try: #bool=!the user has ever been warned with msgid
-		notwarned=not db.search(User.name == str(user))[0][str(msgid)]
+		notwarned=not db.search(User.name == str(user))[0][str(msgid.replace("_VE", ""))]
 	except (IndexError, KeyError) as e: #User not included in the file
 		notwarned=True
 
 	if notwarned:
 		print(msgid)
 		#add user/msgid:true to json
-		db.upsert({'name': str(user), str(msgid): True}, User.name == str(user))
+		db.upsert({'name': str(user), str(msgid.replace("_VE", "")): True}, User.name == str(user))
 		try: #add id to the messages for the user
 			messages[user].append(text)
 		except KeyError:
@@ -184,7 +257,8 @@ def crsf_login():
 	if DATA1["clientlogin"]["status"]=="PASS":
 		print("Logged in as "+username)
 	else:
-		print("Login error."+DATA1)
+		print("Login error.")
+		print(DATA1)
 		raise SystemExit
 
 	#Token CSRF
@@ -213,7 +287,7 @@ PARAMS3 ={
 	"rctype": "edit|new",
 	"rclimit": "max",
 	"rcdir" : "newer",
-	"rcnamespace": "0|1|2|3|6|14"
+	"rcnamespace": "0|1|2|3|5|7|9|11|13|14|15|14|101|103|829"
 }
 
 #Get last update's timestamp
@@ -231,15 +305,12 @@ RECENTCHANGES = DATA3['query']['recentchanges']
 
 #For each edit
 for rc in RECENTCHANGES:
-	i=i+1 #Increase iteration count (debug)
-	print(i)
-
 	#Get user's infos
 	PARAMS4={
 		"action": "query",
 		"format": "json",
 		"list": "users",
-		"usprop": "blockinfo|editcount|gender",
+		"usprop": "blockinfo|editcount|gender|groups",
 		"ususers": rc['user']
 	}
 	R = S.get(url=URL, params=PARAMS4)
@@ -248,7 +319,7 @@ for rc in RECENTCHANGES:
 
 	try:
 		edcount=us['editcount'] #Get edits' number
-		isbot=rc['bot']=="" #Check if bot
+		isbot="bot" in us['groups'] #Check if bot
 	except KeyError: #Anonym users
 		edcount=0
 		isbot=False
@@ -257,7 +328,7 @@ for rc in RECENTCHANGES:
 		edcount=0				#DEBUG
 
 	#Check if the edit should be considered
-	if edcount < 100 and rc['timestamp']!=lasttimestamp and not "mw-reverted" in rc["tags"] and not "mw-undo" in rc["tags"] and not "mw-manual-revert" in rc["tags"] and not isbot:
+	if (edcount < 100) and (rc['timestamp']!=lasttimestamp) and (not "mw-reverted" in rc["tags"]) and (not "mw-undo" in rc["tags"]) and (not "mw-manual-revert" in rc["tags"]) and (not isbot):
 		#API revisions
 		PARAMS5={
 			"action": "query",
@@ -315,7 +386,7 @@ for rc in RECENTCHANGES:
 			il=0
 			b=0
 			brackets=False
-			
+			#todo: ferma ascolto anche con #
 			#Get diff's added, removed and linked text
 			for l in diff: #For each character
 				#Record link
@@ -367,7 +438,7 @@ for rc in RECENTCHANGES:
 					rem=rem+l.replace('- ', '')
 
 			#Print collected data (debug)
-			print(str(us['name'])) 
+			print(str(us['name'])+" - "+"{{diff|"+str(rc['revid'])+"}}") 
 			print("ADDED:")
 			print(add)
 			print("REMOVED:")
@@ -378,49 +449,58 @@ for rc in RECENTCHANGES:
 			#Call check functions
 			if rc["ns"]%2==0: #Not talks
 				if not (rc["ns"]==3 and DATA5['query']['pages'][0]['title'].replace("User:", "").replace("Utente:", "") == rc['user']): #User but not userpage
-					disambigua(links, rc['user'])
-					linkfile(add, rc['user'])
-					citaweb(add, rc['user'])
-					wrongref(add, rc['user'])
-					sectionlink(add, rc['user'])
-					if rc['ns']==14: #Category
-						linkcat(links, rc['user'])
+					if rc['ns']==0 or rc['ns']==2:
+						disambigua(links, rc['user'])
+						linkfile(add, rc['user'], 'visualeditor' in rc['tags'])
+						citaweb(add, rc['user'])
+						wrongref(add, rc['user'], 'visualeditor' in rc['tags'])
+						sectionlink(add, rc['user'])
+						extlink(add, rc['user'])
+					elif rc['ns']==14: #Category
+						linkcat(links, rc['user'], 'visualeditor' in rc['tags'])
 					if newpage: #New page
 						sezionistandard(add, rc['user'])
 						traduzioneerrata(add, rc['user'])
-						if "contenttranslation" in rc['tags']: #Content translation
+						if "contenttranslation" in rc['tags'] and rc["ns"]==0: #Content translation
 							tradottoda(DATA5['query']['pages'][0]['title'], rc['user'])
 
 			else: #Talks
-				if DATA5['query']['pages'][0]['title'].replace("User talk:", "").replace("Discussioni utente:", "") == rc['user']:
-					print("TALK")
-			
-		else: #ores score too low (debug)
-			print("NO - "+str(us['name']))
-	else: #edit not considered (debug)
-		print("NO - "+str(us['name']))
-	#divisor (debug)
-	print("-"*10)
+				firma(add, rc)
+				ping(add, rc, DATA5['query']['pages'][0]['title'].replace("User talk:", "").replace("Discussioni utente:", "") == rc['user'])
+
+			#divisor (debug)
+			print("-"*10)
 
 #Write messages
 for user in messages:
 	txt="\n\n== Aiuto ==\n\nCiao {{subst:ROOTPAGENAME}}, ti scrivo in quanto ho notato che hai effettuato degli errori comuni ai nuovi utenti, permettimi di spiegarti il problema nei dettagli!"
 	
-	#todo: controlla benvenuto; api edit
-
+	#Check if page exists
+	PARAMS_CHECK={
+	"action": "query",
+	"format": "json",
+	"prop": "",
+	"titles": "User talk:"+user,
+	"formatversion": "latest"
+	}
+	R = S.get(url=URL, params=PARAMS_CHECK)
+	DATA = R.json()
+	try:
+		txt="{{subst:Benvenuto}}\n"+txt
+	except KeyError:
+		pass
+	#Edit
 	for text in messages[user]:
 		txt=txt+"\n\n"+text
-
-	#Edit
-	if user=="ValeJappo":#DEBUG <--- todo: rimuovere
+	if user=="ValeJappo" and str(info["site"])=="test":#DEBUG <--- todo: rimuovere
 		PARAMS_EDIT = {
 			"action": "edit",
 			"title": "User talk:"+user,
 			"token": crsf_login(),
 			"format": "json",
-			"appendtext": txt+"\n\n--[[User:BOTutor|<sup><small>BOT</small></sup>Tutor]] (<small>messaggio automatico: [[User talk:BOTutor|segnala un problema]] - [[Aiuto:Sportello informazioni|chiedi aiuto]]</small>)"#todo: firma da file
+			"summary": "Consiglio",
+			"appendtext": txt+"\n\n--[[User:BOTutor|BOTutor]] (<small>messaggio automatico: [[User talk:BOTutor|segnala un problema]] · [[Aiuto:Sportello informazioni|chiedi aiuto]]</small>) ~~~~~"
 		}
 		R = S.post(URL, data=PARAMS_EDIT)
-
 #Set current timestamp as last update's timestamp
 os.system("python update_timestamp.py")

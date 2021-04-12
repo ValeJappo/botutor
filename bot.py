@@ -19,7 +19,7 @@ password=str(info["password"])
 S = requests.Session()
 URL = "https://"+str(info["site"])+".wikipedia.org/w/api.php"
 
-#Check functions
+#Rules
 def disambigua(links, user):
 	for link in links:
 		try:

@@ -74,31 +74,9 @@ def sectionformat(add, user):
 	if add.replace(" ", "").find("==''") >=0 and add.replace(" ", "").find("''==") >=0:
 		msg(user, "SECTIONFORMAT")
 
-def sezionistandard(add, user): #todo: fix
+def sezionistandard(add, user):
 	sections=[]
 	if (add.replace(" ", "").lower().find("==note==")) > 0:
-		"""
-		s=0
-		si=0
-		section=False
-		for l in add:
-			if l=="=" and s==0 and not section:
-				s=1
-			if l=="=" and s==1 and not section:
-				s=0
-				section=True
-
-			if section and l!="=":
-				try 
-			if section and l=="=":
-				s=-1
-
-			if s==-1 and l=="=":
-				section=False
-				si=si+1
-			elif s==-1:
-				s=0
-		"""
 		sections.append(add.replace(" ", "").lower().find("==note=="))
 	if (add.replace(" ", "").lower().find("==bibliografia==")) > 0:
 		sections.append(add.replace(" ", "").lower().find("==bibliografia=="))
@@ -324,9 +302,6 @@ for rc in RECENTCHANGES:
 		edcount=0
 		isbot=False
 
-	if rc['user']=="ValeJappo":	#DEBUG <-- todo: rimuovere
-		edcount=0				#DEBUG
-
 	#Check if the edit should be considered
 	if (edcount < 100) and (rc['timestamp']!=lasttimestamp) and (not "mw-reverted" in rc["tags"]) and (not "mw-undo" in rc["tags"]) and (not "mw-manual-revert" in rc["tags"]) and (not isbot):
 		#API revisions
@@ -349,9 +324,6 @@ for rc in RECENTCHANGES:
 		except: #page deleted
 			print("Error")
 			break
-
-		if rc['user']=="ValeJappo":	#DEBUG <-- todo: rimuovere
-			score=1					#DEBUG
 		
 		#Check if the edit should be considered
 		if score >= 0.3:
@@ -386,7 +358,7 @@ for rc in RECENTCHANGES:
 			il=0
 			b=0
 			brackets=False
-			#todo: ferma ascolto anche con #
+
 			#Get diff's added, removed and linked text
 			for l in diff: #For each character
 				#Record link
@@ -414,7 +386,7 @@ for rc in RECENTCHANGES:
 				if brackets:
 					b=0 #Initialize brackets counter
 					#Stop recording link
-					if l.replace("  ", "").replace("+ ", "") == "|":
+					if l.replace("  ", "").replace("+ ", "") == "|" or l.replace("  ", "").replace("+ ", "") == "#":
 						il=il+1
 						brackets=False
 
@@ -437,7 +409,7 @@ for rc in RECENTCHANGES:
 					#Add to rem the removed text
 					rem=rem+l.replace('- ', '')
 
-			#Print collected data (debug)
+			#Print collected data (log)
 			print(str(us['name'])+" - "+"{{diff|"+str(rc['revid'])+"}}") 
 			print("ADDED:")
 			print(add)
@@ -468,7 +440,7 @@ for rc in RECENTCHANGES:
 				firma(add, rc)
 				ping(add, rc, DATA5['query']['pages'][0]['title'].replace("User talk:", "").replace("Discussioni utente:", "") == rc['user'])
 
-			#divisor (debug)
+			#Divisor (log)
 			print("-"*10)
 
 #Write messages
@@ -492,15 +464,14 @@ for user in messages:
 	#Edit
 	for text in messages[user]:
 		txt=txt+"\n\n"+text
-	if user=="ValeJappo" and str(info["site"])=="test":#DEBUG <--- todo: rimuovere
-		PARAMS_EDIT = {
-			"action": "edit",
-			"title": "User talk:"+user,
-			"token": crsf_login(),
-			"format": "json",
-			"summary": "Consiglio",
-			"appendtext": txt+"\n\n--[[User:BOTutor|BOTutor]] (<small>messaggio automatico: [[User talk:BOTutor|segnala un problema]] · [[Aiuto:Sportello informazioni|chiedi aiuto]]</small>) ~~~~~"
-		}
-		R = S.post(URL, data=PARAMS_EDIT)
+	PARAMS_EDIT = {
+		"action": "edit",
+		"title": "User talk:"+user,
+		"token": crsf_login(),
+		"format": "json",
+		"summary": "Consiglio",
+		"appendtext": txt+"\n\n--[[User:BOTutor|BOTutor]] (<small>messaggio automatico: [[User talk:BOTutor|segnala un problema]] · [[Aiuto:Sportello informazioni|chiedi aiuto]]</small>) ~~~~~"
+	}
+	R = S.post(URL, data=PARAMS_EDIT)
 #Set current timestamp as last update's timestamp
 os.system("python update_timestamp.py")

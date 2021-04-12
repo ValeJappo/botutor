@@ -133,11 +133,11 @@ def tradottoda(title, user):
 		msg(user, "TRADOTTODA")
 
 def traduzioneerrata(add, user):
-	if (add.replace(" ", "").lower().find("==riferimenti==")) > 0:
+	if add.replace(" ", "").lower().find("==riferimenti==") > 0 or add.replace(" ", "").lower().find("==linkesterni==") > 0:
 		msg(user, "TRADUZIONEERRATA")
 
 def firma(add, rc):
-	if (add.find(":"+rc['user']) == -1): #Not signed
+	if add.find(":"+rc['user']) == -1 and len(add)>20: #Not signed
 		try:
 			PARAMS={
 			"action": "query",
@@ -156,7 +156,7 @@ def firma(add, rc):
 			pass
 
 def ping(add, rc, isUserTalk):
-	if isUserTalk and len(add)>20: #Is user talk or is signed
+	if isUserTalk and len(add)>20: #Is user talk
 		try:
 			PARAMS={
 			"action": "query",

@@ -462,7 +462,7 @@ for user in messages:
 	"action": "query",
 	"format": "json",
 	"prop": "",
-	"titles": "User talk:"+user,
+	"titles": "User:BOTutor/Prove",#Testing purposes# "User talk:"+user,
 	"formatversion": "latest"
 	}
 	R = S.get(url=URL, params=PARAMS_CHECK)

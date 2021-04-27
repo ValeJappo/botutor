@@ -436,7 +436,7 @@ for rc in RECENTCHANGES:
 						citaweb(add, rc['user'])
 						wrongref(add, rc['user'], 'visualeditor' in rc['tags'])
 						sectionlink(add, rc['user'])
-						extlink(diff, rc['user'])
+						#extlink(diff, rc['user'])
 					elif rc['ns']==14: #Category
 						linkcat(links, rc['user'], 'visualeditor' in rc['tags'])
 					if newpage: #New page

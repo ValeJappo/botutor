@@ -8,6 +8,9 @@ from configparser import ConfigParser
 #Define global variables
 messages={}
 
+currentRevID=0#Testing purposes
+revids={}
+
 #Get bot's login credentials
 config_object = ConfigParser()
 config_object.read("config.conf")
@@ -205,6 +208,12 @@ def msg(user, msgid):
 		except KeyError:
 			messages[user]=[text]
 
+		#Testing purposes
+		try:
+			revids[user].append(currentRevID)
+		except KeyError:
+			revids[user]=[currentRevID]
+
 #Login function
 def crsf_login():
 	# Token login
@@ -316,7 +325,7 @@ for rc in RECENTCHANGES:
 		}
 		R = S.get(url=URL, params=PARAMS5)
 		DATA5 = R.json()
-		
+		currentRevID=rc['revid'] #Testing purposes
 		try:#Get edit's ores score
 			score=float(DATA5['query']['pages'][0]['revisions'][1]['oresscores']['goodfaith']['true'])
 		except IndexError: #New page
@@ -445,8 +454,9 @@ for rc in RECENTCHANGES:
 
 #Write messages
 for user in messages:
-	txt="\n\n== Aiuto ==\n\nCiao {{subst:ROOTPAGENAME}}, ti scrivo in quanto ho notato che hai effettuato degli errori comuni ai nuovi utenti, permettimi di spiegarti il problema nei dettagli!"
-	
+	txt="(Utente: "+user+"; RevID(s): "+str(revids[user])+"\n\n== Aiuto ==\n\nCiao {{subst:ROOTPAGENAME}}, ti scrivo in quanto ho notato che hai effettuato degli errori comuni ai nuovi utenti, permettimi di spiegarti il problema nei dettagli!"
+	#    ^ Testing purposes
+
 	#Check if page exists
 	PARAMS_CHECK={
 	"action": "query",
@@ -466,7 +476,7 @@ for user in messages:
 		txt=txt+"\n\n"+text
 	PARAMS_EDIT = {
 		"action": "edit",
-		"title": "User talk:"+user,
+		"title": "User:BOTutor/Prove",#Testing purposes# "User talk:"+user,
 		"token": crsf_login(),
 		"format": "json",
 		"summary": "Consiglio",

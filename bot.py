@@ -97,7 +97,7 @@ def sezionistandard(add, user):
 		elif section < sections[i]:
 			msg(user, "SEZIONISTANDARD")
 			i=i+1
-
+"""
 def extlink(add, user):
 	edindex=add.replace(" ", "").lower().find("==collegamentiesterni==")
 	if edindex==-1:
@@ -117,7 +117,7 @@ def extlink(add, user):
 				return None
 			else:
 				stindex2=add.replace(" ", "").lower().find("https://", stindex2, edindex)+1
-
+"""
 def tradottoda(title, user):
 	try:
 		PARAMS={
@@ -436,7 +436,7 @@ for rc in RECENTCHANGES:
 						citaweb(add, rc['user'])
 						wrongref(add, rc['user'], 'visualeditor' in rc['tags'])
 						sectionlink(add, rc['user'])
-						extlink(add, rc['user'])
+						extlink(diff, rc['user'])
 					elif rc['ns']==14: #Category
 						linkcat(links, rc['user'], 'visualeditor' in rc['tags'])
 					if newpage: #New page

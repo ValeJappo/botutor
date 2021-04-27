@@ -454,8 +454,8 @@ for rc in RECENTCHANGES:
 
 #Write messages
 for user in messages:
-	txt="(Utente: "+user+"; RevID(s): "+str(revids[user])+"\n\n== Aiuto ==\n\nCiao {{subst:ROOTPAGENAME}}, ti scrivo in quanto ho notato che hai effettuato degli errori comuni ai nuovi utenti, permettimi di spiegarti il problema nei dettagli!"
-	#    ^ Testing purposes
+	txt="\n\n== Aiuto ==\n\n"+"(Utente: "+user+"; RevID(s): "+str(revids[user])+")"+"Ciao {{subst:ROOTPAGENAME}}, ti scrivo in quanto ho notato che hai effettuato degli errori comuni ai nuovi utenti, permettimi di spiegarti il problema nei dettagli!"
+	#                          ^ Testing purposes
 
 	#Check if page exists
 	PARAMS_CHECK={

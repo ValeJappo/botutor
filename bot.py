@@ -308,6 +308,7 @@ for rc in stream:
 
 		R = S.get(url=URL, params=PARAMS5)
 		DATA5 = R.json()
+		print(DATA5) #Debug
 		currentRevID=rc['revision']['new'] #Testing purposes
 		try:#Get edit's ores score
 			score=float(DATA5['query']['pages'][0]['revisions'][1]['oresscores']['goodfaith']['true'])

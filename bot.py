@@ -8,6 +8,7 @@ from pywikibot.comms.eventstreams import EventStreams
 
 #Define global variables
 messages=[]
+PYWIKIBOT_NO_USER_CONFIG=1
 
 currentRevID=0#Testing purposes
 revids={}

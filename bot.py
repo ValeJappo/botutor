@@ -4,9 +4,10 @@ import difflib
 import json
 from tinydb import TinyDB, Query
 from configparser import ConfigParser
+from pywikibot.comms.eventstreams import EventStreams
 
 #Define global variables
-messages={}
+messages=[]
 
 currentRevID=0#Testing purposes
 revids={}
@@ -97,6 +98,7 @@ def sezionistandard(add, user):
 		elif section < sections[i]:
 			msg(user, "SEZIONISTANDARD")
 			i=i+1
+
 """
 def extlink(add, user):
 	edindex=add.replace(" ", "").lower().find("==collegamentiesterni==")
@@ -118,6 +120,7 @@ def extlink(add, user):
 			else:
 				stindex2=add.replace(" ", "").lower().find("https://", stindex2, edindex)+1
 """
+
 def tradottoda(title, user):
 	try:
 		PARAMS={
@@ -146,7 +149,7 @@ def firma(add, rc):
 			"action": "query",
 			"format": "json",
 			"prop": "revisions",
-			"revids": rc['old_revid'],
+			"revids": rc['revision']["old"],
 			"formatversion": "2",
 			"rvprop": "user",
 			"rvslots": "main"
@@ -158,7 +161,7 @@ def firma(add, rc):
 		except KeyError:#New page
 			pass
 
-def ping(add, rc, isUserTalk):
+def ping(add, rc, isUserTalk, tags):
 	if isUserTalk and len(add)>20: #Is user talk
 		try:
 			PARAMS={
@@ -179,7 +182,7 @@ def ping(add, rc, isUserTalk):
 
 		if isPreviousEditOk:
 			if add.lower().replace("utente:", "user:").find("user:") == add.lower().replace("utente:", "user:").find("user:"+rc['user'].lower()) and add.lower().replace(" ","").replace("{{at|", "{{ping|").replace("{{replyto|", "{{ping|").find("{{ping|") == -1: #If nobody is mentioned
-				if "discussiontools-visual" in rc['tags']:
+				if "discussiontools-visual" in tags:
 					msg(rc['user'], "PING_VE")
 				else:
 					msg(rc['user'], "PING")
@@ -203,10 +206,11 @@ def msg(user, msgid):
 		print(msgid)
 		#add user/msgid:true to json
 		db.upsert({'name': str(user), str(msgid.replace("_VE", "")): True}, User.name == str(user))
-		try: #add id to the messages for the user
-			messages[user].append(text)
+		global messages
+		try: #add id to the messages queue
+			messages.append(text)
 		except KeyError:
-			messages[user]=[text]
+			messages=[text]
 
 		#Testing purposes
 		try:
@@ -261,81 +265,62 @@ def crsf_login():
 	#Return token
 	return DATA2['query']['tokens']['csrftoken']
 
-
 #Analyze recent changes
 
-#Recentchanges API
-PARAMS3 ={
-	"action": "query",
-	"format": "json",
-	"list": "recentchanges",
-	"continue": "-||",
-	"rcprop": "title|user|userid|timestamp|flags|tags|ids",
-	"rctype": "edit|new",
-	"rclimit": "max",
-	"rcdir" : "newer",
-	"rcnamespace": "0|1|2|3|5|7|9|11|13|14|15|14|101|103|829"
-}
+namespaces = [0,1,2,3,5,7,9,11,13,14,15,14,101,103,829]
+stream = EventStreams(streams=['recentchange'])
+stream.register_filter(server_name=str(info["site"])+'.wikipedia.org', type=('edit', 'new'))
+for rc in stream:
+	if (not rc['patrolled']) or rc['namespace'] not in namespaces:
+		print(rc["user"])
+		#Get user's infos
+		PARAMS4={
+			"action": "query",
+			"format": "json",
+			"list": "users",
+			"usprop": "blockinfo|editcount|gender|groups",
+			"ususers": rc['user']
+		}
+		R = S.get(url=URL, params=PARAMS4)
+		DATA4 = R.json()
+		us=DATA4['query']['users'][0]
 
-#Get last update's timestamp
-try:
-	PARAMS3["rcstart"]=str(config_object["DATA"]["timestamp"]) #Add to API's params
-	lasttimestamp=str(config_object["DATA"]["timestamp"])
-except (KeyError, NameError) as error: #There is no timestamp
-	os.system("python3 update_timestamp.py")
-	raise SystemExit
-
-#API Request
-R = S.get(url=URL, params=PARAMS3)
-DATA3 = R.json()
-RECENTCHANGES = DATA3['query']['recentchanges']
-
-#For each edit
-for rc in RECENTCHANGES:
-	#Get user's infos
-	PARAMS4={
-		"action": "query",
-		"format": "json",
-		"list": "users",
-		"usprop": "blockinfo|editcount|gender|groups",
-		"ususers": rc['user']
-	}
-	R = S.get(url=URL, params=PARAMS4)
-	DATA4 = R.json()
-	us=DATA4['query']['users'][0]
-
-	try:
-		edcount=us['editcount'] #Get edits' number
-		isbot="bot" in us['groups'] #Check if bot
-	except KeyError: #Anonym users
-		edcount=0
-		isbot=False
-
-	#Check if the edit should be considered
-	if (edcount < 100) and (rc['timestamp']!=lasttimestamp) and (not "mw-reverted" in rc["tags"]) and (not "mw-undo" in rc["tags"]) and (not "mw-manual-revert" in rc["tags"]) and (not isbot):
+		try:
+			edcount=us['editcount'] #Get edits' number
+			isbot="bot" in us['groups'] #Check if bot
+		except KeyError: #Anonym users
+			edcount=0
+			isbot=False
+		
 		#API revisions
 		PARAMS5={
 			"action": "query",
 			"format": "json",
 			"prop": "revisions",
-			"revids": str(rc['revid'])+"|"+str(rc['old_revid']),
 			"formatversion": "latest",
-			"rvprop": "content|oresscores|sha1",
+			"rvprop": "content|oresscores|sha1|tags",
 			"rvslots": "*"
 		}
+		try:
+			PARAMS5["revids"]=str(rc['revision']['new'])+"|"+str(rc['revision']['old'])
+		except KeyError:
+			PARAMS5["revids"]=str(rc['revision']['new'])
+
 		R = S.get(url=URL, params=PARAMS5)
 		DATA5 = R.json()
-		currentRevID=rc['revid'] #Testing purposes
+		currentRevID=rc['revision']['new'] #Testing purposes
 		try:#Get edit's ores score
 			score=float(DATA5['query']['pages'][0]['revisions'][1]['oresscores']['goodfaith']['true'])
+			tags=DATA5['query']['pages'][0]['revisions'][1]['tags']
 		except IndexError: #New page
 			score=float(DATA5['query']['pages'][0]['revisions'][0]['oresscores']['goodfaith']['true'])
+			tags=DATA5['query']['pages'][0]['revisions'][0]['tags']
 		except: #page deleted
 			print("Error")
-			break
+			edcount=100 #avoid continuing 
 		
 		#Check if the edit should be considered
-		if score >= 0.3:
+		if (edcount < 100) and (not "mw-reverted" in tags) and (not "mw-undo" in tags) and (not "mw-manual-revert" in tags) and (not isbot) and score >= 0.3:
 			#Get the differences
 			c1=DATA5['query']['pages'][0]['revisions'][0]['slots']['main']['content'] #Content after the edit
 			try: 
@@ -419,7 +404,7 @@ for rc in RECENTCHANGES:
 					rem=rem+l.replace('- ', '')
 
 			#Print collected data (log)
-			print(str(us['name'])+" - "+"{{diff|"+str(rc['revid'])+"}}") 
+			print(str(us['name'])+" - "+"{{diff|"+str(rc['revision']['new'])+"}}") 
 			print("ADDED:")
 			print(add)
 			print("REMOVED:")
@@ -428,60 +413,62 @@ for rc in RECENTCHANGES:
 			print(links)
 					
 			#Call check functions
-			if rc["ns"]%2==0: #Not talks
-				if not (rc["ns"]==3 and DATA5['query']['pages'][0]['title'].replace("User:", "").replace("Utente:", "") == rc['user']): #User but not userpage
-					if rc['ns']==0 or rc['ns']==2:
+			if rc["namespace"]%2==0: #Not talks
+				if not (rc["namespace"]==3 and DATA5['query']['pages'][0]['title'].replace("User:", "").replace("Utente:", "") == rc['user']): #User but not userpage
+					if rc['namespace']==0 or rc['namespace']==2:
 						disambigua(links, rc['user'])
-						linkfile(add, rc['user'], 'visualeditor' in rc['tags'])
+						linkfile(add, rc['user'], 'visualeditor' in tags)
 						citaweb(add, rc['user'])
-						wrongref(add, rc['user'], 'visualeditor' in rc['tags'])
+						wrongref(add, rc['user'], 'visualeditor' in tags)
 						sectionlink(add, rc['user'])
-						extlink(diff, rc['user'])
-					elif rc['ns']==14: #Category
-						linkcat(links, rc['user'], 'visualeditor' in rc['tags'])
+						#extlink(add, rc['user'])
+					elif rc['namespace']==14: #Category
+						linkcat(links, rc['user'], 'visualeditor' in tags)
 					if newpage: #New page
 						sezionistandard(add, rc['user'])
 						traduzioneerrata(add, rc['user'])
-						if "contenttranslation" in rc['tags'] and rc["ns"]==0: #Content translation
+						if "contenttranslation" in tags and rc["namespace"]==0: #Content translation
 							tradottoda(DATA5['query']['pages'][0]['title'], rc['user'])
 
 			else: #Talks
 				firma(add, rc)
-				ping(add, rc, DATA5['query']['pages'][0]['title'].replace("User talk:", "").replace("Discussioni utente:", "") == rc['user'])
+				ping(add, rc, DATA5['query']['pages'][0]['title'].replace("User talk:", "").replace("Discussioni utente:", "") == rc['user'], tags)
 
 			#Divisor (log)
 			print("-"*10)
 
-#Write messages
-for user in messages:
-	txt="\n\n== Aiuto ==\n\n"+"(Utente: "+user+"; RevID(s): "+str(revids[user])+")"+"Ciao {{subst:ROOTPAGENAME}}, ti scrivo in quanto ho notato che hai effettuato degli errori comuni ai nuovi utenti, permettimi di spiegarti il problema nei dettagli!"
-	#                          ^ Testing purposes
+			#Write messages
+			txt="\n\n== Aiuto ==\n\n"+"(Utente: "+rc["user"]+"; RevID: "+str(rc["revision"]["new"])+")"+"Ciao {{subst:ROOTPAGENAME}}, questo è un messaggio automatizzato; ti scrivo in quanto ho notato che hai effettuato degli errori comuni ai nuovi utenti, permettimi di spiegarti il problema nei dettagli!"
+			#                          ^ Testing purposes
 
-	#Check if page exists
-	PARAMS_CHECK={
-	"action": "query",
-	"format": "json",
-	"prop": "",
-	"titles": "User:BOTutor/Prove",#Testing purposes# "User talk:"+user,
-	"formatversion": "latest"
-	}
-	R = S.get(url=URL, params=PARAMS_CHECK)
-	DATA = R.json()
-	try:
-		txt="{{subst:Benvenuto}}\n"+txt
-	except KeyError:
-		pass
-	#Edit
-	for text in messages[user]:
-		txt=txt+"\n\n"+text
-	PARAMS_EDIT = {
-		"action": "edit",
-		"title": "User:BOTutor/Prove",#Testing purposes# "User talk:"+user,
-		"token": crsf_login(),
-		"format": "json",
-		"summary": "Consiglio",
-		"appendtext": txt+"\n\n--[[User:BOTutor|BOTutor]] (<small>messaggio automatico: [[User talk:BOTutor|segnala un problema]] · [[Aiuto:Sportello informazioni|chiedi aiuto]]</small>) ~~~~~"
-	}
-	R = S.post(URL, data=PARAMS_EDIT)
-#Set current timestamp as last update's timestamp
-os.system("python update_timestamp.py")
+			#Check if page exists
+			PARAMS_CHECK={
+			"action": "query",
+			"format": "json",
+			"prop": "",
+			"titles": "User:BOTutor/Prove",#Testing purposes# "User talk:"+rc["user"],
+			"formatversion": "latest"
+			}
+			R = S.get(url=URL, params=PARAMS_CHECK)
+			DATA = R.json()
+			try:
+				test=rc["revision"]["old"]
+				txt="{{subst:Benvenuto}}\n"+txt
+			except KeyError:
+				pass
+			#Edit
+			warn=False
+			for text in messages:
+				txt=txt+"\n\n"+text
+				warn=True
+			if warn:
+				PARAMS_EDIT = {
+					"action": "edit",
+					"title": "User:BOTutor/Prove",#Testing purposes# "User talk:"+user,
+					"token": crsf_login(),
+					"format": "json",
+					"summary": "Consiglio",
+					"appendtext": txt+"\n\n--[[User:BOTutor|BOTutor]] (<small>messaggio automatico: [[User talk:BOTutor|segnala un problema]] · [[Aiuto:Sportello informazioni|chiedi aiuto]]</small>) ~~~~~"
+				}
+				R = S.post(URL, data=PARAMS_EDIT)
+				messages=[]

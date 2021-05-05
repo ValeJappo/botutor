@@ -319,6 +319,7 @@ for rc in stream:
 		except TypeError: #Something went wrong
 			if DATA5['query']['pages'][0]['revisions'][0]['oresscores'] == []:
 				score=1
+				tags=DATA5['query']['pages'][0]['revisions'][1]['tags']
 		except: #page deleted
 			print("Error")
 			edcount=100 #avoid continuing 

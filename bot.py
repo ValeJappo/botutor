@@ -421,9 +421,15 @@ for rc in stream:
 						citaweb(add, rc['user'])
 						wrongref(add, rc['user'], 'visualeditor' in tags)
 						sectionlink(add, rc['user'])
+<<<<<<< HEAD
 						#extlink(add, rc['user'])
 					elif rc['namespace']==14: #Category
 						linkcat(links, rc['user'], 'visualeditor' in tags)
+=======
+						#extlink(diff, rc['user'])
+					elif rc['ns']==14: #Category
+						linkcat(links, rc['user'], 'visualeditor' in rc['tags'])
+>>>>>>> e967b43d68580548583d329f75939575b8d69a2d
 					if newpage: #New page
 						sezionistandard(add, rc['user'])
 						traduzioneerrata(add, rc['user'])
@@ -437,6 +443,7 @@ for rc in stream:
 			#Divisor (log)
 			print("-"*10)
 
+<<<<<<< HEAD
 			#Write messages
 			txt="\n\n== Aiuto ==\n\n"+"(Utente: "+rc["user"]+"; RevID: "+str(rc["revision"]["new"])+")"+"Ciao {{subst:ROOTPAGENAME}}, questo è un messaggio automatizzato; ti scrivo in quanto ho notato che hai effettuato degli errori comuni ai nuovi utenti, permettimi di spiegarti il problema nei dettagli!"
 			#                          ^ Testing purposes
@@ -472,3 +479,38 @@ for rc in stream:
 				}
 				R = S.post(URL, data=PARAMS_EDIT)
 				messages=[]
+=======
+#Write messages
+for user in messages:
+	txt="\n\n== Aiuto ==\n\n"+"(Utente: "+user+"; RevID(s): "+str(revids[user])+")"+"Ciao {{subst:ROOTPAGENAME}}, ti scrivo in quanto ho notato che hai effettuato degli errori comuni ai nuovi utenti, permettimi di spiegarti il problema nei dettagli!"
+	#                          ^ Testing purposes
+
+	#Check if page exists
+	PARAMS_CHECK={
+	"action": "query",
+	"format": "json",
+	"prop": "",
+	"titles": "User:BOTutor/Prove",#Testing purposes# "User talk:"+user,
+	"formatversion": "latest"
+	}
+	R = S.get(url=URL, params=PARAMS_CHECK)
+	DATA = R.json()
+	try:
+		txt="{{subst:Benvenuto}}\n"+txt
+	except KeyError:
+		pass
+	#Edit
+	for text in messages[user]:
+		txt=txt+"\n\n"+text
+	PARAMS_EDIT = {
+		"action": "edit",
+		"title": "User:BOTutor/Prove",#Testing purposes# "User talk:"+user,
+		"token": crsf_login(),
+		"format": "json",
+		"summary": "Consiglio",
+		"appendtext": txt+"\n\n--[[User:BOTutor|BOTutor]] (<small>messaggio automatico: [[User talk:BOTutor|segnala un problema]] · [[Aiuto:Sportello informazioni|chiedi aiuto]]</small>) ~~~~~"
+	}
+	R = S.post(URL, data=PARAMS_EDIT)
+#Set current timestamp as last update's timestamp
+os.system("python update_timestamp.py")
+>>>>>>> e967b43d68580548583d329f75939575b8d69a2d

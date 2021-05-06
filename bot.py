@@ -271,218 +271,185 @@ namespaces = [0,1,2,3,5,7,9,11,13,14,15,14,101,103,829]
 stream = EventStreams(streams=['recentchange'])
 stream.register_filter(server_name=str(info["site"])+'.wikipedia.org', type=('edit', 'new'))
 for rc in stream:
-	if (not rc['patrolled']) or rc['namespace'] not in namespaces:
-		print(rc["user"])
-		#Get user's infos
-		PARAMS4={
-			"action": "query",
-			"format": "json",
-			"list": "users",
-			"usprop": "blockinfo|editcount|gender|groups",
-			"ususers": rc['user']
-		}
-		R = S.get(url=URL, params=PARAMS4)
-		DATA4 = R.json()
-		us=DATA4['query']['users'][0]
+	if rc['patrolled'] or rc['namespace'] not in namespaces:
+		continue
 
-		try:
-			edcount=us['editcount'] #Get edits' number
-			isbot="bot" in us['groups'] #Check if bot
-		except KeyError: #Anonym users
-			edcount=0
-			isbot=False
-		
-		#API revisions
-		PARAMS5={
-			"action": "query",
-			"format": "json",
-			"prop": "revisions",
-			"formatversion": "latest",
-			"rvprop": "content|oresscores|sha1|tags",
-			"rvslots": "*"
-		}
-		try:
-			PARAMS5["revids"]=str(rc['revision']['new'])+"|"+str(rc['revision']['old'])
-		except KeyError:
-			PARAMS5["revids"]=str(rc['revision']['new'])
+	print(rc["user"])
+	#Get user's infos
+	PARAMS4={
+		"action": "query",
+		"format": "json",
+		"list": "users",
+		"usprop": "blockinfo|editcount|gender|groups",
+		"ususers": rc['user']
+	}
+	R = S.get(url=URL, params=PARAMS4)
+	DATA4 = R.json()
+	us=DATA4['query']['users'][0]
 
-		R = S.get(url=URL, params=PARAMS5)
-		DATA5 = R.json()
-		print(DATA5) #Debug
-		currentRevID=rc['revision']['new'] #Testing purposes
-		try:#Get edit's ores score
-			score=float(DATA5['query']['pages'][0]['revisions'][1]['oresscores']['goodfaith']['true'])
+	try:
+		edcount=us['editcount'] #Get edits' number
+		isbot="bot" in us['groups'] #Check if bot
+	except KeyError: #Anonym users
+		edcount=0
+		isbot=False
+	
+	#API revisions
+	PARAMS5={
+		"action": "query",
+		"format": "json",
+		"prop": "revisions",
+		"formatversion": "latest",
+		"rvprop": "content|oresscores|sha1|tags",
+		"rvslots": "*"
+	}
+	try:
+		PARAMS5["revids"]=str(rc['revision']['new'])+"|"+str(rc['revision']['old'])
+	except KeyError:
+		PARAMS5["revids"]=str(rc['revision']['new'])
+
+	R = S.get(url=URL, params=PARAMS5)
+	DATA5 = R.json()
+	print(DATA5) #Debug
+	currentRevID=rc['revision']['new'] #Testing purposes
+	try:#Get edit's ores score
+		score=float(DATA5['query']['pages'][0]['revisions'][1]['oresscores']['goodfaith']['true'])
+		tags=DATA5['query']['pages'][0]['revisions'][1]['tags']
+	except IndexError: #New page
+		score=float(DATA5['query']['pages'][0]['revisions'][0]['oresscores']['goodfaith']['true'])
+		tags=DATA5['query']['pages'][0]['revisions'][0]['tags']
+	except TypeError: #Something went wrong
+		if DATA5['query']['pages'][0]['revisions'][0]['oresscores'] == []:
+			score=1
 			tags=DATA5['query']['pages'][0]['revisions'][1]['tags']
-		except IndexError: #New page
-			score=float(DATA5['query']['pages'][0]['revisions'][0]['oresscores']['goodfaith']['true'])
-			tags=DATA5['query']['pages'][0]['revisions'][0]['tags']
-		except TypeError: #Something went wrong
-			if DATA5['query']['pages'][0]['revisions'][0]['oresscores'] == []:
-				score=1
-				tags=DATA5['query']['pages'][0]['revisions'][1]['tags']
-		except: #page deleted
-			print("Error")
-			edcount=100 #avoid continuing 
+	except: #page deleted
+		print("Error")
+		continue
+	
+	#Check if the edit should be considered
+	if (edcount >= 100) or ("mw-reverted" in tags) or ("mw-undo" in tags) or ("mw-manual-revert" in tags) or isbot or score < 0.3:
+		continue
+	#Get the differences
+	c1=DATA5['query']['pages'][0]['revisions'][0]['slots']['main']['content'] #Content after the edit
+	try: 
+		c2=DATA5['query']['pages'][0]['revisions'][1]['slots']['main']['content'] #Content before the edit
+		#Get diff
+		diff=difflib.ndiff(c1, c2)
+		newpage=False
+	except IndexError: #New page
+		diff=c1 #diff = content
+		newpage=True
+
+	"""
+	Diffs' format:
+
+	Added character			+ c		(+_c)
+	Removed character		- c		(-_c)
+	Unchanged character		  c		(__c)
+
+
+	New pages' format:
+
+	Character				c		 (c)
+	"""
+
+	#Define variables
+	add=""
+	rem=""
+	links=[]
+	il=0
+	b=0
+	brackets=False
+
+	#Get diff's added, removed and linked text
+	for l in diff: #For each character
+		#Record link
+		if brackets and l.replace('+ ', '').replace('  ', '') != "]" and l.replace('+ ', '').replace(' ', '') != "|" and not l.startswith('- '):
+			if len(l)>1: #Length is > 1 if it is formatted by the diff (+/-/_ _ char)
+				l=l[2:] #Remove first two characters
+			try: #Add character to current link
+				links[il]=links[il]+l
+			except IndexError: #New link (first character)
+				links.append(l)
 		
-		#Check if the edit should be considered
-		if (edcount < 100) and (not "mw-reverted" in tags) and (not "mw-undo" in tags) and (not "mw-manual-revert" in tags) and (not isbot) and score >= 0.3:
-			#Get the differences
-			c1=DATA5['query']['pages'][0]['revisions'][0]['slots']['main']['content'] #Content after the edit
-			try: 
-				c2=DATA5['query']['pages'][0]['revisions'][1]['slots']['main']['content'] #Content before the edit
-				#Get diff
-				diff=difflib.ndiff(c1, c2)
-				newpage=False
-			except IndexError: #New page
-				diff=c1 #diff = content
-				newpage=True
+		#Detect closed bracket
+		if l.replace('+ ', '').replace(' ', '') == "]" and b==0 and brackets:
+			b=-1
 
-			"""
-			Diffs' format:
+		#Detect second closed bracket	
+		if b==-1:
+			b=0 #Initialize brackets counter
+			#Stop recording link
+			if (l.replace('+ ', '').replace(' ', '') == "]" and brackets) or (l.replace(" ", "").replace("+", "") == "|" and brackets):
+				il=il+1
+				brackets=False
+		
+		#Detect pipe
+		if brackets:
+			b=0 #Initialize brackets counter
+			#Stop recording link
+			if l.replace("  ", "").replace("+ ", "") == "|" or l.replace("  ", "").replace("+ ", "") == "#":
+				il=il+1
+				brackets=False
 
-			Added character			+ c		(+_c)
-			Removed character		- c		(-_c)
-			Unchanged character		  c		(__c)
+		if l.startswith('+ ') or len(l)==1: #is added or new page
+			#Add to add the added text
+			add=add+l.replace('+ ', '')
 
+			#Detect bracket
+			if l.replace('+ ', '') == "[" and b==0 and not brackets:
+				b=+1
 
-			New pages' format:
+			#Detect second bracket
+			elif b==1 and not brackets:
+				b=0 #Initialize brackets counter
+				#Start recording link
+				if l.replace('+ ', '') == "[": 
+					brackets=True	
 
-			Character				c		 (c)
-			"""
+		if l.startswith('- '): #is removed
+			#Add to rem the removed text
+			rem=rem+l.replace('- ', '')
 
-			#Define variables
-			add=""
-			rem=""
-			links=[]
-			il=0
-			b=0
-			brackets=False
+	#Print collected data (log)
+	print(str(us['name'])+" - "+"{{diff|"+str(rc['revision']['new'])+"}}") 
+	print("ADDED:")
+	print(add)
+	print("REMOVED:")
+	print(rem)
+	print("LINKS:")
+	print(links)
+			
+	#Call check functions
+	if rc["namespace"]%2==0: #Not talks
+		if not (rc["namespace"]==3 and DATA5['query']['pages'][0]['title'].replace("User:", "").replace("Utente:", "") == rc['user']): #User but not userpage
+			if rc['namespace']==0 or rc['namespace']==2:
+				disambigua(links, rc['user'])
+				linkfile(add, rc['user'], 'visualeditor' in tags)
+				citaweb(add, rc['user'])
+				wrongref(add, rc['user'], 'visualeditor' in tags)
+				sectionlink(add, rc['user'])
+				#extlink(add, rc['user'])
+			elif rc['namespace']==14: #Category
+				linkcat(links, rc['user'], 'visualeditor' in tags)
+				#extlink(diff, rc['user'])
+			elif rc['ns']==14: #Category
+				linkcat(links, rc['user'], 'visualeditor' in rc['tags'])
+			if newpage: #New page
+				sezionistandard(add, rc['user'])
+				traduzioneerrata(add, rc['user'])
+				if "contenttranslation" in tags and rc["namespace"]==0: #Content translation
+					tradottoda(DATA5['query']['pages'][0]['title'], rc['user'])
 
-			#Get diff's added, removed and linked text
-			for l in diff: #For each character
-				#Record link
-				if brackets and l.replace('+ ', '').replace('  ', '') != "]" and l.replace('+ ', '').replace(' ', '') != "|" and not l.startswith('- '):
-					if len(l)>1: #Length is > 1 if it is formatted by the diff (+/-/_ _ char)
-						l=l[2:] #Remove first two characters
-					try: #Add character to current link
-						links[il]=links[il]+l
-					except IndexError: #New link (first character)
-						links.append(l)
-				
-				#Detect closed bracket
-				if l.replace('+ ', '').replace(' ', '') == "]" and b==0 and brackets:
-					b=-1
+	else: #Talks
+		firma(add, rc)
+		ping(add, rc, DATA5['query']['pages'][0]['title'].replace("User talk:", "").replace("Discussioni utente:", "") == rc['user'], tags)
 
-				#Detect second closed bracket	
-				if b==-1:
-					b=0 #Initialize brackets counter
-					#Stop recording link
-					if (l.replace('+ ', '').replace(' ', '') == "]" and brackets) or (l.replace(" ", "").replace("+", "") == "|" and brackets):
-						il=il+1
-						brackets=False
-				
-				#Detect pipe
-				if brackets:
-					b=0 #Initialize brackets counter
-					#Stop recording link
-					if l.replace("  ", "").replace("+ ", "") == "|" or l.replace("  ", "").replace("+ ", "") == "#":
-						il=il+1
-						brackets=False
+	#Divisor (log)
+	print("-"*10)
 
-				if l.startswith('+ ') or len(l)==1: #is added or new page
-					#Add to add the added text
-					add=add+l.replace('+ ', '')
-
-					#Detect bracket
-					if l.replace('+ ', '') == "[" and b==0 and not brackets:
-						b=+1
-
-					#Detect second bracket
-					elif b==1 and not brackets:
-						b=0 #Initialize brackets counter
-						#Start recording link
-						if l.replace('+ ', '') == "[": 
-							brackets=True	
-
-				if l.startswith('- '): #is removed
-					#Add to rem the removed text
-					rem=rem+l.replace('- ', '')
-
-			#Print collected data (log)
-			print(str(us['name'])+" - "+"{{diff|"+str(rc['revision']['new'])+"}}") 
-			print("ADDED:")
-			print(add)
-			print("REMOVED:")
-			print(rem)
-			print("LINKS:")
-			print(links)
-					
-			#Call check functions
-			if rc["namespace"]%2==0: #Not talks
-				if not (rc["namespace"]==3 and DATA5['query']['pages'][0]['title'].replace("User:", "").replace("Utente:", "") == rc['user']): #User but not userpage
-					if rc['namespace']==0 or rc['namespace']==2:
-						disambigua(links, rc['user'])
-						linkfile(add, rc['user'], 'visualeditor' in tags)
-						citaweb(add, rc['user'])
-						wrongref(add, rc['user'], 'visualeditor' in tags)
-						sectionlink(add, rc['user'])
-						#extlink(add, rc['user'])
-					elif rc['namespace']==14: #Category
-						linkcat(links, rc['user'], 'visualeditor' in tags)
-						#extlink(diff, rc['user'])
-					elif rc['ns']==14: #Category
-						linkcat(links, rc['user'], 'visualeditor' in rc['tags'])
-					if newpage: #New page
-						sezionistandard(add, rc['user'])
-						traduzioneerrata(add, rc['user'])
-						if "contenttranslation" in tags and rc["namespace"]==0: #Content translation
-							tradottoda(DATA5['query']['pages'][0]['title'], rc['user'])
-
-			else: #Talks
-				firma(add, rc)
-				ping(add, rc, DATA5['query']['pages'][0]['title'].replace("User talk:", "").replace("Discussioni utente:", "") == rc['user'], tags)
-
-			#Divisor (log)
-			print("-"*10)
-
-			#Write messages
-			txt="\n\n== Aiuto ==\n\n"+"(Utente: "+rc["user"]+"; RevID: "+str(rc["revision"]["new"])+")"+"Ciao {{subst:ROOTPAGENAME}}, questo è un messaggio automatizzato; ti scrivo in quanto ho notato che hai effettuato degli errori comuni ai nuovi utenti, permettimi di spiegarti il problema nei dettagli!"
-			#                          ^ Testing purposes
-
-			#Check if page exists
-			PARAMS_CHECK={
-			"action": "query",
-			"format": "json",
-			"prop": "",
-			"titles": "User:BOTutor/Prove",#Testing purposes# "User talk:"+rc["user"],
-			"formatversion": "latest"
-			}
-			R = S.get(url=URL, params=PARAMS_CHECK)
-			DATA = R.json()
-			try:
-				test=rc["revision"]["old"]
-				txt="{{subst:Benvenuto}}\n"+txt
-			except KeyError:
-				pass
-			#Edit
-			warn=False
-			for text in messages:
-				txt=txt+"\n\n"+text
-				warn=True
-			if warn:
-				PARAMS_EDIT = {
-					"action": "edit",
-					"title": "User:BOTutor/Prove",#Testing purposes# "User talk:"+user,
-					"token": crsf_login(),
-					"format": "json",
-					"summary": "Consiglio",
-					"appendtext": txt+"\n\n--[[User:BOTutor|BOTutor]] (<small>messaggio automatico: [[User talk:BOTutor|segnala un problema]] · [[Aiuto:Sportello informazioni|chiedi aiuto]]</small>) ~~~~~"
-				}
-				R = S.post(URL, data=PARAMS_EDIT)
-				messages=[]
-#Write messages
-for user in messages:
-	txt="\n\n== Aiuto ==\n\n"+"(Utente: "+user+"; RevID(s): "+str(revids[user])+")"+"Ciao {{subst:ROOTPAGENAME}}, ti scrivo in quanto ho notato che hai effettuato degli errori comuni ai nuovi utenti, permettimi di spiegarti il problema nei dettagli!"
+	#Write messages
+	txt="\n\n== Aiuto ==\n\n"+"(Utente: "+rc["user"]+"; RevID: "+str(rc["revision"]["new"])+")"+"Ciao {{subst:ROOTPAGENAME}}, questo è un messaggio automatizzato; ti scrivo in quanto ho notato che hai effettuato degli errori comuni ai nuovi utenti, permettimi di spiegarti il problema nei dettagli!"
 	#                          ^ Testing purposes
 
 	#Check if page exists
@@ -490,26 +457,29 @@ for user in messages:
 	"action": "query",
 	"format": "json",
 	"prop": "",
-	"titles": "User:BOTutor/Prove",#Testing purposes# "User talk:"+user,
+	"titles": "User:BOTutor/Prove",#Testing purposes# "User talk:"+rc["user"],
 	"formatversion": "latest"
 	}
 	R = S.get(url=URL, params=PARAMS_CHECK)
 	DATA = R.json()
 	try:
+		test=rc["revision"]["old"]
 		txt="{{subst:Benvenuto}}\n"+txt
 	except KeyError:
 		pass
 	#Edit
-	for text in messages[user]:
+	warn=False
+	for text in messages:
 		txt=txt+"\n\n"+text
-	PARAMS_EDIT = {
-		"action": "edit",
-		"title": "User:BOTutor/Prove",#Testing purposes# "User talk:"+user,
-		"token": crsf_login(),
-		"format": "json",
-		"summary": "Consiglio",
-		"appendtext": txt+"\n\n--[[User:BOTutor|BOTutor]] (<small>messaggio automatico: [[User talk:BOTutor|segnala un problema]] · [[Aiuto:Sportello informazioni|chiedi aiuto]]</small>) ~~~~~"
-	}
-	R = S.post(URL, data=PARAMS_EDIT)
-#Set current timestamp as last update's timestamp
-os.system("python update_timestamp.py")
+		warn=True
+	if warn:
+		PARAMS_EDIT = {
+			"action": "edit",
+			"title": "User:BOTutor/Prove",#Testing purposes# "User talk:"+user,
+			"token": crsf_login(),
+			"format": "json",
+			"summary": "Consiglio",
+			"appendtext": txt+"\n\n--[[User:BOTutor|BOTutor]] (<small>messaggio automatico: [[User talk:BOTutor|segnala un problema]] · [[Aiuto:Sportello informazioni|chiedi aiuto]]</small>) ~~~~~"
+		}
+		R = S.post(URL, data=PARAMS_EDIT)
+		messages=[]

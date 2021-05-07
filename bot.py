@@ -114,7 +114,7 @@ def extlink(links, revid, user):
 	content=DATA["query"]["pages"][0]["revisions"][0]["slots"]["main"]["content"]
 	for link in links:
 		if link["external"]:
-			if content.find(link["link"].replace("/wiki/", "")) < content.lower().replace(" ", "").find("==collegamentiesterni"):
+			if content.find(link["link"].replace("/wiki/", "")) < content.lower().replace(" ", "").find("==collegamentiesterni") and add[content.find(link["link"].replace("/wiki/", ""))-1]!="=" and add[content.find(link["link"].replace("/wiki/", ""))-1] != "|" and add[content.find(link["link"].replace("/wiki/", ""))-1] != ">" and add[content.find(link["link"].replace("/wiki/", ""))-2] != "=" and add[content.find(link["link"].replace("/wiki/", ""))-2] != "|" and add[content.find(link["link"].replace("/wiki/", ""))-2] != ">":
 				msg(user, "EXTLINK")
 
 def tradottoda(title, user):
@@ -435,14 +435,14 @@ for rc in stream:
 	"action": "query",
 	"format": "json",
 	"prop": "",
-	"titles": "User:BOTutor/Prove",#Testing purposes# "User talk:"+rc["user"],
+	"titles": "User talk:"+rc["user"],
 	"formatversion": "latest"
 	}
 	R = S.get(url=URL, params=PARAMS_CHECK)
 	DATA = R.json()
 	try:
-		test=rc["revision"]["old"]
-		txt="{{subst:Benvenuto}}\n"+txt
+		if DATA["missing"] == "":
+			txt="{{subst:Benvenuto}}\n"+txt
 	except KeyError:
 		pass
 	#Edit

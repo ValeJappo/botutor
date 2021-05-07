@@ -114,7 +114,7 @@ def extlink(links, revid, user):
 	content=DATA["query"]["pages"][0]["revisions"][0]["slots"]["main"]["content"]
 	for link in links:
 		if link["external"]:
-			if content.find(link["link"].replace("/wiki/", "")) < content.lower().replace(" ", "").find("==collegamentiesterni") and (content.find("</ref", content.find(link["link"].replace("/wiki/", ""))) >= content.find("<ref", content.find(link["link"].replace("/wiki/", "")))) and (content.find("}}", content.find(link["link"].replace("/wiki/", ""))) >= content.find("{{", content.find(link["link"].replace("/wiki/", "")))):
+			if content.find(link["link"].replace("/wiki/", "")) < content.lower().replace(" ", "").find("==collegamentiesterni") and (content.find("</ref", content.find(link["link"].replace("/wiki/", ""))) <= content.find("<ref", content.find(link["link"].replace("/wiki/", "")))) and (content.find("}}", content.find(link["link"].replace("/wiki/", ""))) <= content.find("{{", content.find(link["link"].replace("/wiki/", "")))):
 				msg(user, "EXTLINK")
 
 def tradottoda(title, user):

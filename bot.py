@@ -436,12 +436,12 @@ for rc in stream:
 	"format": "json",
 	"prop": "",
 	"titles": "User talk:"+rc["user"],
-	"formatversion": "latest"
+	"formatversion": "2"
 	}
 	R = S.get(url=URL, params=PARAMS_CHECK)
 	DATA = R.json()
 	try:
-		if DATA["missing"] == "":
+		if DATA["query"]["pages"][0]["missing"] == True:
 			txt="{{subst:Benvenuto}}\n"+txt
 	except KeyError:
 		pass

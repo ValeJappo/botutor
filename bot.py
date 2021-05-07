@@ -31,13 +31,13 @@ def disambigua(links, user):
 				"action": "query",
 				"format": "json",
 				"prop": "templates",
-				"titles": link,
+				"titles": link["link"].replace("/wiki/", ""),
 				"formatversion": "latest",
 				"tltemplates": "Template:Disambigua"
 			}
 			R = S.get(url=URL, params=PARAMS)
 			DATA = R.json()
-			if DATA['query']['pages'][0]['templates'][0]['title']=="Template:Disambigua":
+			if DATA['query']['pages'][0]['templates'][0]['title']=="Template:Disambigua" and not link["external"]:
 				msg(user, "DISAMBIGUA")
 		except KeyError:#Page do not exist
 			pass			
@@ -53,7 +53,7 @@ def linkfile(add, user, ve):
 
 def linkcat(links, user, ve):
 	for link in links:
-		if link.find(":") < 0:
+		if link["link"].find(":") < 0 and not link["external"]:
 			if ve:
 				msg(user, "LINKCAT_VE")
 			else:
@@ -99,27 +99,23 @@ def sezionistandard(add, user):
 			msg(user, "SEZIONISTANDARD")
 			i=i+1
 
-"""
-def extlink(add, user):
-	edindex=add.replace(" ", "").lower().find("==collegamentiesterni==")
-	if edindex==-1:
-		edindex=len(add.replace(" ", ""))-1
-	stindex1=0
-	stindex2=0
-	while add.replace(" ", "").lower().find("http://", stindex1, edindex)!=-1 or add.replace(" ", "").lower().find("https://", stindex2, edindex)!=-1:
-		if add.replace(" ", "").lower().find("http://", stindex1, edindex)>1:
-			if add.replace(" ", "")[add.replace(" ", "").lower().find("http://", stindex1, edindex)-1]!="=" and add.replace(" ", "")[add.replace(" ", "").lower().find("http://", stindex1, edindex)-1]!=">" and add.replace(" ", "")[add.replace(" ", "").lower().find("http://", stindex1, edindex)-2]!="=" and add.replace(" ", "")[add.replace(" ", "").lower().find("http://", stindex1, edindex)-1]!=">":
+def extlink(links, revid, user):
+	PARAMS={
+		"action": "query",
+		"format": "json",
+		"prop": "revisions",
+		"revids": str(revid),
+		"formatversion": "2",
+		"rvprop": "content",
+		"rvslots": "*"
+	}
+	R = S.get(url=URL, params=PARAMS)
+	DATA = R.json()
+	content=DATA["query"]["pages"][0]["revisions"][0]["slots"]["main"]["content"]
+	for link in links:
+		if link["external"]:
+			if content.find(link["link"].replace("/wiki/", "")) < content.lower().replace(" ", "").find("==collegamentiesterni"):
 				msg(user, "EXTLINK")
-				return None
-			else:
-				stindex1=add.replace(" ", "").lower().find("http://", stindex1, edindex)+1
-		if add.replace(" ", "").lower().find("https://", stindex2, edindex)>1:
-			if add.replace(" ", "")[add.replace(" ", "").lower().find("https://", stindex2, edindex)-1]!="=" and add.replace(" ", "")[add.replace(" ", "").lower().find("https://", stindex2, edindex)-1]!=">" and add.replace(" ", "")[add.replace(" ", "").lower().find("https://", stindex2, edindex)-2]!="=" and add.replace(" ", "")[add.replace(" ", "").lower().find("https://", stindex2, edindex)-1]!=">":
-				msg(user, "EXTLINK")
-				return None
-			else:
-				stindex2=add.replace(" ", "").lower().find("https://", stindex2, edindex)+1
-"""
 
 def tradottoda(title, user):
 	try:
@@ -168,7 +164,7 @@ def ping(add, rc, isUserTalk, tags):
 			"action": "query",
 			"format": "json",
 			"prop": "revisions",
-			"revids": rc['old_revid'],
+			"revids": rc['revision']["old"],
 			"formatversion": "2",
 			"rvprop": "user",
 			"rvslots": "main"
@@ -268,9 +264,27 @@ def crsf_login():
 #Analyze recent changes
 
 namespaces = [0,1,2,3,5,7,9,11,13,14,15,14,101,103,829]
-stream = EventStreams(streams=['recentchange'])
-stream.register_filter(server_name=str(info["site"])+'.wikipedia.org', type=('edit', 'new'))
+stream = EventStreams(streams=['recentchange', 'page-links-change'])
 for rc in stream:
+	streamlink=False
+	try:
+		if rc["server_name"] != str(info["site"])+'.wikipedia.org' or (rc["type"] != "edit" and rc["type"] != "new"):
+			continue
+	except KeyError:
+		if rc["meta"]["domain"] != str(info["site"])+'.wikipedia.org':
+			continue
+		streamlink=True
+	
+	if streamlink:
+		rc["patrolled"]=False
+		rc["namespace"]=rc["page_namespace"]
+		rc["user"]=rc["performer"]["user_text"]
+		rc["revision"]={"new":rc["rev_id"]}
+		try:
+			test=rc["added_links"]
+		except KeyError:
+			continue
+
 	if rc['patrolled'] or rc['namespace'] not in namespaces:
 		continue
 
@@ -310,14 +324,18 @@ for rc in stream:
 
 	R = S.get(url=URL, params=PARAMS5)
 	DATA5 = R.json()
-	print(DATA5) #Debug
 	currentRevID=rc['revision']['new'] #Testing purposes
 	try:#Get edit's ores score
 		score=float(DATA5['query']['pages'][0]['revisions'][1]['oresscores']['goodfaith']['true'])
 		tags=DATA5['query']['pages'][0]['revisions'][1]['tags']
 	except IndexError: #New page
-		score=float(DATA5['query']['pages'][0]['revisions'][0]['oresscores']['goodfaith']['true'])
-		tags=DATA5['query']['pages'][0]['revisions'][0]['tags']
+		try: 
+			score=float(DATA5['query']['pages'][0]['revisions'][0]['oresscores']['goodfaith']['true'])
+			tags=DATA5['query']['pages'][0]['revisions'][0]['tags']
+		except TypeError: #Something went wrong
+			if DATA5['query']['pages'][0]['revisions'][0]['oresscores'] == []:
+				score=1
+				tags=DATA5['query']['pages'][0]['revisions'][0]['tags']
 	except TypeError: #Something went wrong
 		if DATA5['query']['pages'][0]['revisions'][0]['oresscores'] == []:
 			score=1
@@ -329,121 +347,81 @@ for rc in stream:
 	#Check if the edit should be considered
 	if (edcount >= 100) or ("mw-reverted" in tags) or ("mw-undo" in tags) or ("mw-manual-revert" in tags) or isbot or score < 0.3:
 		continue
-	#Get the differences
-	c1=DATA5['query']['pages'][0]['revisions'][0]['slots']['main']['content'] #Content after the edit
-	try: 
-		c2=DATA5['query']['pages'][0]['revisions'][1]['slots']['main']['content'] #Content before the edit
-		#Get diff
-		diff=difflib.ndiff(c1, c2)
-		newpage=False
-	except IndexError: #New page
-		diff=c1 #diff = content
-		newpage=True
 
-	"""
-	Diffs' format:
+	if not streamlink:
+		#Get the differences
+		c1=DATA5['query']['pages'][0]['revisions'][0]['slots']['main']['content'] #Content after the edit
+		try: 
+			c2=DATA5['query']['pages'][0]['revisions'][1]['slots']['main']['content'] #Content before the edit
+			#Get diff
+			diff=difflib.ndiff(c1, c2)
+			newpage=False
+		except IndexError: #New page
+			diff=c1 #diff = content
+			newpage=True
 
-	Added character			+ c		(+_c)
-	Removed character		- c		(-_c)
-	Unchanged character		  c		(__c)
+		"""
+		Diffs' format:
+
+		Added character			+ c		(+_c)
+		Removed character		- c		(-_c)
+		Unchanged character		  c		(__c)
 
 
-	New pages' format:
+		New pages' format:
 
-	Character				c		 (c)
-	"""
+		Character				c		 (c)
+		"""
 
-	#Define variables
-	add=""
-	rem=""
-	links=[]
-	il=0
-	b=0
-	brackets=False
+		#Define variables
+		add=""
+		rem=""
 
-	#Get diff's added, removed and linked text
-	for l in diff: #For each character
-		#Record link
-		if brackets and l.replace('+ ', '').replace('  ', '') != "]" and l.replace('+ ', '').replace(' ', '') != "|" and not l.startswith('- '):
-			if len(l)>1: #Length is > 1 if it is formatted by the diff (+/-/_ _ char)
-				l=l[2:] #Remove first two characters
-			try: #Add character to current link
-				links[il]=links[il]+l
-			except IndexError: #New link (first character)
-				links.append(l)
+		#Get diff's added, removed and linked text
+		for l in diff: #For each character
+			if l.startswith('+ ') or len(l)==1: #is added or new page
+				#Add to add the added text
+				add=add+l.replace('+ ', '')
+
+			if l.startswith('- '): #is removed
+				#Add to rem the removed text
+				rem=rem+l.replace('- ', '')
+
+		#Print collected data (log)
+		print(str(us['name'])+" - "+"{{diff|"+str(rc['revision']['new'])+"}}") 
+		print("ADDED:")
+		print(add)
+		print("REMOVED:")
+		print(rem)
+				
+		#Call check functions
+		if rc["namespace"]%2==0: #Not talks
+			if not (rc["namespace"]==3 and DATA5['query']['pages'][0]['title'].replace("User:", "").replace("Utente:", "") == rc['user']): #User but not userpage
+				if rc['namespace']==0 or rc['namespace']==2:
+					linkfile(add, rc['user'], 'visualeditor' in tags)
+					citaweb(add, rc['user'])
+					wrongref(add, rc['user'], 'visualeditor' in tags)
+					sectionlink(add, rc['user'])
+
+				if newpage: #New page
+					sezionistandard(add, rc['user'])
+					traduzioneerrata(add, rc['user'])
+					if "contenttranslation" in tags and rc["namespace"]==0: #Content translation
+						tradottoda(DATA5['query']['pages'][0]['title'], rc['user'])
+
+		else: #Talks
+			firma(add, rc)
+			ping(add, rc, DATA5['query']['pages'][0]['title'].replace("User talk:", "").replace("Discussioni utente:", "") == rc['user'], tags)
+	else: # If streamlinks
+		#Call check functions
+		if rc['namespace']==0 or rc['namespace']==2:
+			disambigua(rc["added_links"], rc['user'])
+			extlink(rc["added_links"], rc["revision"]["new"], rc['user'])
+
+		elif rc['namespace']==14: #Category
+				linkcat(rc["added_links"], rc['user'], 'visualeditor' in tags)
+				extlink(rc["added_links"],rc["revision"]["new"], rc['user'])
 		
-		#Detect closed bracket
-		if l.replace('+ ', '').replace(' ', '') == "]" and b==0 and brackets:
-			b=-1
-
-		#Detect second closed bracket	
-		if b==-1:
-			b=0 #Initialize brackets counter
-			#Stop recording link
-			if (l.replace('+ ', '').replace(' ', '') == "]" and brackets) or (l.replace(" ", "").replace("+", "") == "|" and brackets):
-				il=il+1
-				brackets=False
-		
-		#Detect pipe
-		if brackets:
-			b=0 #Initialize brackets counter
-			#Stop recording link
-			if l.replace("  ", "").replace("+ ", "") == "|" or l.replace("  ", "").replace("+ ", "") == "#":
-				il=il+1
-				brackets=False
-
-		if l.startswith('+ ') or len(l)==1: #is added or new page
-			#Add to add the added text
-			add=add+l.replace('+ ', '')
-
-			#Detect bracket
-			if l.replace('+ ', '') == "[" and b==0 and not brackets:
-				b=+1
-
-			#Detect second bracket
-			elif b==1 and not brackets:
-				b=0 #Initialize brackets counter
-				#Start recording link
-				if l.replace('+ ', '') == "[": 
-					brackets=True	
-
-		if l.startswith('- '): #is removed
-			#Add to rem the removed text
-			rem=rem+l.replace('- ', '')
-
-	#Print collected data (log)
-	print(str(us['name'])+" - "+"{{diff|"+str(rc['revision']['new'])+"}}") 
-	print("ADDED:")
-	print(add)
-	print("REMOVED:")
-	print(rem)
-	print("LINKS:")
-	print(links)
-			
-	#Call check functions
-	if rc["namespace"]%2==0: #Not talks
-		if not (rc["namespace"]==3 and DATA5['query']['pages'][0]['title'].replace("User:", "").replace("Utente:", "") == rc['user']): #User but not userpage
-			if rc['namespace']==0 or rc['namespace']==2:
-				disambigua(links, rc['user'])
-				linkfile(add, rc['user'], 'visualeditor' in tags)
-				citaweb(add, rc['user'])
-				wrongref(add, rc['user'], 'visualeditor' in tags)
-				sectionlink(add, rc['user'])
-				#extlink(add, rc['user'])
-			elif rc['namespace']==14: #Category
-				linkcat(links, rc['user'], 'visualeditor' in tags)
-				#extlink(diff, rc['user'])
-			elif rc['ns']==14: #Category
-				linkcat(links, rc['user'], 'visualeditor' in rc['tags'])
-			if newpage: #New page
-				sezionistandard(add, rc['user'])
-				traduzioneerrata(add, rc['user'])
-				if "contenttranslation" in tags and rc["namespace"]==0: #Content translation
-					tradottoda(DATA5['query']['pages'][0]['title'], rc['user'])
-
-	else: #Talks
-		firma(add, rc)
-		ping(add, rc, DATA5['query']['pages'][0]['title'].replace("User talk:", "").replace("Discussioni utente:", "") == rc['user'], tags)
 
 	#Divisor (log)
 	print("-"*10)
